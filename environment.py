@@ -136,21 +136,21 @@ class Game:
     def draw(self):
         # """ Draw Dots """
         for dot in self.dots:
-            coloralpha = dot.get_alpha()
-            colornow = (dot.color[0], dot.color[1], dot.color[2], coloralpha)
+            visualpacket = dot.visual()
 
             # Create a temporary surface with per-pixel alpha
-            temp_surface = pygame.Surface((dot.size * 2, dot.size * 2), pygame.SRCALPHA)
-            pygame.draw.circle(temp_surface, colornow, (dot.size, dot.size), dot.size)
+            temp_surface = pygame.Surface((visualpacket["size"] * 2, visualpacket["size"] * 2), pygame.SRCALPHA)
+            pygame.draw.circle(temp_surface, visualpacket["color"], (visualpacket["size"], visualpacket["size"]), visualpacket["size"])
 
             # Blit the temporary surface onto the main screen
             self.screen.blit(
-                temp_surface, (dot.position[0] - dot.size, dot.position[1] - dot.size)
+                temp_surface, (visualpacket["position"][0] - visualpacket["size"], visualpacket["position"][1] - visualpacket["size"])
             )
 
         # """ Draw Ants """
         for ant in self.ants:
-            pygame.draw.polygon(self.screen, ant.color, ant.calculate_draw_points())
+            visualpacket = ant.visual()
+            pygame.draw.polygon(self.screen, visualpacket["color"], visualpacket["points"])
             if self.debug is True:
                 pygame.draw.polygon(self.screen, WHITE, ant.calculate_view_triangle())
 
