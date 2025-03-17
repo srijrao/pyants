@@ -146,11 +146,15 @@ class Ant:
         current_angle = self.angle
         if angle is not None:
             angle = angle % 360
+            # Reflect the angle around the collision angle
             self.angle = (2 * angle - current_angle) % 360
         else:
+            # Reflect the angle around the vertical axis
             self.angle = (180 - current_angle) % 360
 
-        self.move()
+        # Move the ant slightly away from the edge to prevent repetitive flipping
+        self.move(forward=True)
+        self.screen_clamp()
 
     def screen_clamp(self):
         """
