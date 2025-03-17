@@ -1,10 +1,11 @@
 import pygame
 import settings
 from dots import Dot
+from ants import Ant
 import sys
 
 WHITE = settings.WHITE
-BGBROWN = settings.BGBROWN
+BROWN = settings.BROWN
 
 
 class Game:
@@ -63,7 +64,7 @@ class Game:
             if self.paused is False:
                 self.updatesimulation()
 
-            self.screen.fill(BGBROWN)  # Dark brown color
+            self.screen.fill(BROWN)  # Dark brown color
             self.draw()
             pygame.display.flip()
             # Limit the frame rate
@@ -106,7 +107,7 @@ class Game:
         ]
 
     def draw(self):
-        
+
         # """ Draw Dots """
         for dot in self.dots:
             pygame.draw.circle(self.screen, dot.color, dot.position, dot.size)
