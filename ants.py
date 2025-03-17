@@ -22,7 +22,7 @@ class Ant:
         self.collision_distance = settings.collision_distance
         self.barrier_distance = self.collision_distance * 2
         self.rotation_speed = 10
-        self.movement_speed = 1
+        self.movement_speed = settings.ant_speed
         self.foodbool = False
         self.timeawareness = 0
 
@@ -119,19 +119,46 @@ class Ant:
         new_y = position[1] - movement * math.sin(math.radians(current_angle))
         self.position = [new_x, new_y]
 
-    def check_edge_collision(self, constraint=True):
+    def check_edge_collision(self, constraint=False):
         """
         Check if the organism is near screen edges and handle accordingly.
         """
         position = self.position
         x, y = position[0], position[1]
-        if (
-            x < self.barrier_distance
-            or x > self.screen_w - self.barrier_distance
-            or y < self.barrier_distance
-            or y > self.screen_h - self.barrier_distance
-        ) and constraint:
+        collision_angle = None
+        if x < self.barrier_distance:  # Hits left edge
+            collision_angle = 180
+        elif x > self.screen_w - self.barrier_distance:  # Hits right edge
+            collision_angle = 0
+        elif y < self.barrier_distance:  # Hits top edge
+            collision_angle = 90
+        elif y > self.screen_h - self.barrier_distance:  # Hits bottom edge
+            collision_angle = 270
+
+        if collision_angle is not None:
             self.screen_clamp()
+            print("Collision detected at angle:", collision_angle)
+            self.bounce(angle=collision_angle)
+
+    def bounce(self, angle=None):    
+        """
+        Bounce the organism off the screen edges.
+        """
+        current_angle = self.angle
+        if angle is not None:
+            angle = angle % 360
+            self.angle = (2 * angle - current_angle) % 360
+        else:
+            if current_angle == 0:
+                self.angle = 180
+            elif current_angle == 90:
+                self.angle = 270
+            elif current_angle == 180:
+                self.angle = 0
+            elif current_angle == 270:
+                self.angle = 90
+            else:
+                self.angle = (180 - current_angle) % 360
 
     def screen_clamp(self):
         """
@@ -171,10 +198,7 @@ class Ant:
         """
         dot_type = None
         if self.timeawareness != timesecs:
-            if timesecs % 2 == 0:
-                dot_type = self.drop_dot()
-            else:
-                dot_type = None
+            dot_type = self.drop_dot()
         self.random_walk()
         self.check_edge_collision()
         self.timeawareness = timesecs

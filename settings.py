@@ -13,3 +13,4 @@ BLACK = (10, 10, 10)
 dot_size = 2
 dot_time = 1000
 collision_distance = 10
+ant_speed = 10
