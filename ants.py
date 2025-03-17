@@ -52,6 +52,15 @@ class Ant:
             points.append((x, y))
         return points
 
+    def visual(self):
+        points = self.calculate_draw_points()
+        self.visual_packet = {
+            "position": self.position,
+            "points": points,
+            "color": self.color,
+        }
+        return self.visual_packet
+
     def distance_to(self, target_position):
         """
         Calculate Euclidean distance to a target position.
@@ -218,7 +227,7 @@ class Ant:
         right_y = self.position[1] - vision_distance * math.sin(
             angle_rad + half_fov_rad
         )
-        
+
         return [
             (self.position[0], self.position[1]),
             (left_x, left_y),

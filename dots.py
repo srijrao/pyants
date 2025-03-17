@@ -1,5 +1,6 @@
 import settings
 
+
 class Dot:
     def __init__(self, position=[0, 0], type="to home"):
         self.position = position
@@ -7,7 +8,7 @@ class Dot:
         self.setup()
 
     def setup(self):
-        """ setup function for the dot """
+        """setup function for the dot"""
         self.size = settings.dot_size
         self.timeleft = settings.dot_time
         self.active = True
@@ -19,10 +20,20 @@ class Dot:
             self.color = settings.WHITE
 
     def update(self):
-        """ update function for the dot """
+        """update function for the dot"""
         self.timeleft -= 1
         if self.timeleft <= 0:
             self.active = False
+
     def get_alpha(self):
-        """ Calculate the alpha value based on time left """
+        """Calculate the alpha value based on time left"""
         return int((self.timeleft / settings.dot_time) * 255)
+
+    def visual(self):
+        """Return the visual packet for the dot"""
+        self.visual_packet = {
+            "position": self.position,
+            "size": self.size,
+            "color": (self.color[0], self.color[1], self.color[2], self.get_alpha()),
+        }
+        return self.visual_packet
