@@ -9,8 +9,9 @@ BROWN = settings.BROWN
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, debug=False):
         pygame.init()
+        self.debug = debug
         self.width = settings.width
         self.height = settings.height
         self.targetfps = settings.targetfps
@@ -137,18 +138,22 @@ class Game:
         for dot in self.dots:
             coloralpha = dot.get_alpha()
             colornow = (dot.color[0], dot.color[1], dot.color[2], coloralpha)
-            
+
             # Create a temporary surface with per-pixel alpha
             temp_surface = pygame.Surface((dot.size * 2, dot.size * 2), pygame.SRCALPHA)
             pygame.draw.circle(temp_surface, colornow, (dot.size, dot.size), dot.size)
-            
+
             # Blit the temporary surface onto the main screen
-            self.screen.blit(temp_surface, (dot.position[0] - dot.size, dot.position[1] - dot.size))
-        
+            self.screen.blit(
+                temp_surface, (dot.position[0] - dot.size, dot.position[1] - dot.size)
+            )
+
         # """ Draw Ants """
         for ant in self.ants:
             pygame.draw.polygon(self.screen, ant.color, ant.calculate_draw_points())
-        
+            if self.debug is True:
+                pygame.draw.polygon(self.screen, WHITE, ant.calculate_view_triangle())
+
         # Draw UI text
         self.info_lines_calc()
         y_offset = 10
@@ -172,15 +177,20 @@ class Game:
 
         # Check dots
         for dot in self.dots:
-            if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(dot.position):
+            if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(
+                dot.position
+            ):
                 items_in_polygon.append(dot)
 
         # Check ants
         for ant in self.ants:
-            if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(ant.position):
+            if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(
+                ant.position
+            ):
                 items_in_polygon.append(ant)
 
         return items_in_polygon
+
 
 if __name__ == "__main__":
     game = Game()

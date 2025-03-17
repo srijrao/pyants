@@ -11,7 +11,7 @@ class Ant:
 
     def setup(self):
         self.alive = True
-        self.color = settings.BLACK
+        self.color = settings.PURPLE
         self.organism_height = 10
         self.organism_width = 5
         self.num_sides = 3
@@ -184,7 +184,45 @@ class Ant:
         self.rotate(clockwise=random.choice([True, False]))
         self.move(forward=True)
 
-    def act(self,timesecs):
+    def calculate_view_triangle(self, vision_distance=None):
+        """
+        Calculate the vertices of the view triangle representing the ant's field of vision.
+        Args:
+            vision_distance (float): The distance the ant can see in front of it.
+        Returns:
+            list: A list of three tuples representing the vertices of the triangle.
+        """
+        if vision_distance is None:
+            vision_distance = self.collision_distance * 5
+        angle_rad = math.radians(self.angle)
+        half_fov_rad = math.radians(
+            45
+        )  # 90 degrees field of vision, so 45 degrees on each side
+
+        # Calculate the front vertex of the triangle
+        front_x = self.position[0] + vision_distance * math.cos(angle_rad)
+        front_y = self.position[1] - vision_distance * math.sin(angle_rad)
+
+        # Calculate the left vertex of the triangle
+        left_x = self.position[0] + vision_distance * math.cos(angle_rad - half_fov_rad)
+        left_y = self.position[1] - vision_distance * math.sin(angle_rad - half_fov_rad)
+
+        # Calculate the right vertex of the triangle
+        right_x = self.position[0] + vision_distance * math.cos(
+            angle_rad + half_fov_rad
+        )
+        right_y = self.position[1] - vision_distance * math.sin(
+            angle_rad + half_fov_rad
+        )
+        
+        return [
+            (self.position[0], self.position[1]),
+            (left_x, left_y),
+            (front_x, front_y),
+            (right_x, right_y),
+        ]
+
+    def act(self, timesecs):
         """ "
         go
         """
