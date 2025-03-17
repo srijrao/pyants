@@ -25,6 +25,7 @@ class Game:
 
         self.dots = []
         self.ants = []
+
         self.paused = False
         self.create_population()
         # Render Screen
@@ -67,7 +68,6 @@ class Game:
         self.dots = [dot for dot in self.dots if dot.active]
 
         for ant in self.ants:
-
             dot_type = ant.act(int(self.secs))
             if dot_type:
                 self.dots.append(Dot(ant.position, dot_type))
@@ -134,23 +134,39 @@ class Game:
         ]
 
     def draw(self):
+        self.onscreen = [dots for dots in self.dots if dots.active] + [
+            ants for ants in self.ants if ants.alive
+        ]
         # """ Draw Dots """
         for dot in self.dots:
             visualpacket = dot.visual()
 
             # Create a temporary surface with per-pixel alpha
-            temp_surface = pygame.Surface((visualpacket["size"] * 2, visualpacket["size"] * 2), pygame.SRCALPHA)
-            pygame.draw.circle(temp_surface, visualpacket["color"], (visualpacket["size"], visualpacket["size"]), visualpacket["size"])
+            temp_surface = pygame.Surface(
+                (visualpacket["size"] * 2, visualpacket["size"] * 2), pygame.SRCALPHA
+            )
+            pygame.draw.circle(
+                temp_surface,
+                visualpacket["color"],
+                (visualpacket["size"], visualpacket["size"]),
+                visualpacket["size"],
+            )
 
             # Blit the temporary surface onto the main screen
             self.screen.blit(
-                temp_surface, (visualpacket["position"][0] - visualpacket["size"], visualpacket["position"][1] - visualpacket["size"])
+                temp_surface,
+                (
+                    visualpacket["position"][0] - visualpacket["size"],
+                    visualpacket["position"][1] - visualpacket["size"],
+                ),
             )
 
         # """ Draw Ants """
         for ant in self.ants:
             visualpacket = ant.visual()
-            pygame.draw.polygon(self.screen, visualpacket["color"], visualpacket["points"])
+            pygame.draw.polygon(
+                self.screen, visualpacket["color"], visualpacket["points"]
+            )
             if self.debug is True:
                 pygame.draw.polygon(self.screen, WHITE, ant.calculate_view_triangle())
 
@@ -174,20 +190,23 @@ class Game:
             list: A list of items (dots and ants) within the polygon.
         """
         items_in_polygon = []
-
-        # Check dots
-        for dot in self.dots:
-            if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(
-                dot.position
-            ):
-                items_in_polygon.append(dot)
-
-        # Check ants
-        for ant in self.ants:
-            if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(
-                ant.position
-            ):
-                items_in_polygon.append(ant)
+        for item in self.onscreen:
+            if isinstance(item, Dot):
+                if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(
+                    item.position
+                ):  # Check if the dot is within the polygon
+                    items_in_polygon.append(item)
+            elif isinstance(item, Ant):
+                if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(
+                    item.position
+                ): # Check if the ant is within the polygon
+                    items_in_polygon.append(item)
+            else:
+                visual_packet = item.visual()
+                if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(
+                    visual_packet["position"]
+                ): # Check if the item is within the polygon
+                    items_in_polygon.append(item)
 
         return items_in_polygon
 
