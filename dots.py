@@ -23,3 +23,6 @@ class Dot:
         self.timeleft -= 1
         if self.timeleft <= 0:
             self.active = False
+    def get_alpha(self):
+        """ Calculate the alpha value based on time left """
+        return int((self.timeleft / settings.dot_time) * 255)

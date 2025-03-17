@@ -64,9 +64,9 @@ class Game:
             dot.update()
         # Remove dots that are not active
         self.dots = [dot for dot in self.dots if dot.active]
-        
+
         for ant in self.ants:
-            
+
             dot_type = ant.act(int(self.secs))
             if dot_type:
                 self.dots.append(Dot(ant.position, dot_type))
@@ -133,14 +133,22 @@ class Game:
         ]
 
     def draw(self):
-
         # """ Draw Dots """
         for dot in self.dots:
-            pygame.draw.circle(self.screen, dot.color, dot.position, dot.size)
+            coloralpha = dot.get_alpha()
+            colornow = (dot.color[0], dot.color[1], dot.color[2], coloralpha)
+            
+            # Create a temporary surface with per-pixel alpha
+            temp_surface = pygame.Surface((dot.size * 2, dot.size * 2), pygame.SRCALPHA)
+            pygame.draw.circle(temp_surface, colornow, (dot.size, dot.size), dot.size)
+            
+            # Blit the temporary surface onto the main screen
+            self.screen.blit(temp_surface, (dot.position[0] - dot.size, dot.position[1] - dot.size))
+        
         # """ Draw Ants """
         for ant in self.ants:
             pygame.draw.polygon(self.screen, ant.color, ant.calculate_draw_points())
-
+        
         # Draw UI text
         self.info_lines_calc()
         y_offset = 10
