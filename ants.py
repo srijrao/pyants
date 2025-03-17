@@ -12,8 +12,8 @@ class Ant:
     def setup(self):
         self.alive = True
         self.color = settings.BLACK
-        self.organism_width = 10
         self.organism_height = 10
+        self.organism_width = 5
         self.num_sides = 3
         self.angle = 0
         self.position = [settings.width / 2, settings.height / 2]
@@ -21,7 +21,7 @@ class Ant:
         self.screen_h = settings.height
         self.collision_distance = settings.collision_distance
         self.barrier_distance = self.collision_distance * 2
-        self.rotation_speed = 1
+        self.rotation_speed = 10
         self.movement_speed = 1
 
     def calculate_draw_points(self):
@@ -33,8 +33,8 @@ class Ant:
         # Get standard values with defaults
         angle = self.angle
         position = self.position
-        x_radius = self.organism_width
-        y_radius = self.organism_height
+        x_radius = self.organism_height
+        y_radius = self.organism_width
         sides = max(self.num_sides, 3)
         angle_rad = math.radians(angle)
         points = []
@@ -146,10 +146,16 @@ class Ant:
         )
         self.position = [new_x, new_y]
 
+    def random_walk(self):
+        """
+        Simulate a random walk by adjusting the angle and moving forward.
+        """
+        self.rotate(clockwise=random.choice([True, False]))
+        self.move(forward=True)
+
     def act(self):
         """ "
         go
         """
-        self.rotate()
-        self.move()
+        self.random_walk()
         self.check_edge_collision()

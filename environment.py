@@ -23,8 +23,9 @@ class Game:
         self.actual_fps = 1
 
         self.dots = []
+        self.ants = []
         self.paused = False
-
+        self.create_population()
         # Render Screen
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption(settings.name)
@@ -41,11 +42,19 @@ class Game:
         # Stores the current time for the next frame
         self.lastframetime = pygame.time.get_ticks()
 
-    def updatesimulation(self):
+    def create_population(self):
+        self.dots = [Dot() for _ in range(10)]
+        self.ants = [Ant() for _ in range(1)]
+
+    def update_simulation(self):
         for dot in self.dots:
             dot.update()
         # Remove dots that are not active
         self.dots = [dot for dot in self.dots if dot.active]
+        for ant in self.ants:
+            ant.act()
+        # Remove dots that are not active
+        self.ants = [ant for ant in self.ants if ant.alive]
 
     def run(self):
         while self.running:
@@ -62,7 +71,7 @@ class Game:
                 elif event.type == pygame.KEYUP:
                     self.handle_keyup(event)
             if self.paused is False:
-                self.updatesimulation()
+                self.update_simulation()
 
             self.screen.fill(BROWN)  # Dark brown color
             self.draw()
@@ -111,6 +120,9 @@ class Game:
         # """ Draw Dots """
         for dot in self.dots:
             pygame.draw.circle(self.screen, dot.color, dot.position, dot.size)
+        # """ Draw Ants """
+        for ant in self.ants:
+            pygame.draw.polygon(self.screen, ant.color, ant.calculate_draw_points())
 
         # Draw UI text
         self.info_lines_calc()
