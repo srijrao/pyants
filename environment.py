@@ -35,6 +35,19 @@ class Game:
         self.running = True
 
     def timepiece(self):
+        """
+        Updates the elapsed time for the environment.
+
+        This method calculates the time elapsed since the last frame and adds it to the total elapsed time (`self.secs`).
+        It also updates `self.lastframetime` to the current time for use in the next frame.
+
+        If `self.lastframetime` is None, it initializes it with `self.start_time`.
+
+        Attributes:
+            self.lastframetime (int or None): The time of the last frame in milliseconds.
+            self.start_time (int): The start time of the environment in milliseconds.
+            self.secs (float): The total elapsed time in seconds.
+        """
         if not self.lastframetime:
             self.lastframetime = self.start_time
         if self.lastframetime:  # If lastframetime is not None # Update the elapsed time
@@ -51,9 +64,13 @@ class Game:
             dot.update()
         # Remove dots that are not active
         self.dots = [dot for dot in self.dots if dot.active]
+        
         for ant in self.ants:
-            ant.act()
-        # Remove dots that are not active
+            
+            dot_type = ant.act(int(self.secs))
+            if dot_type:
+                self.dots.append(Dot(ant.position, dot_type))
+        # Remove ants that are not active
         self.ants = [ant for ant in self.ants if ant.alive]
 
     def run(self):

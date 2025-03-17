@@ -23,6 +23,8 @@ class Ant:
         self.barrier_distance = self.collision_distance * 2
         self.rotation_speed = 10
         self.movement_speed = 1
+        self.foodbool = False
+        self.timeawareness = 0
 
     def calculate_draw_points(self):
         """
@@ -146,6 +148,16 @@ class Ant:
         )
         self.position = [new_x, new_y]
 
+    def drop_dot(self):
+        """
+        Drop a dot at the current position of the ant.
+        """
+        if self.foodbool:
+            dot_type = "to home"
+        else:
+            dot_type = "to food"
+        return dot_type
+
     def random_walk(self):
         """
         Simulate a random walk by adjusting the angle and moving forward.
@@ -153,9 +165,17 @@ class Ant:
         self.rotate(clockwise=random.choice([True, False]))
         self.move(forward=True)
 
-    def act(self):
+    def act(self,timesecs):
         """ "
         go
         """
+        dot_type = None
+        if self.timeawareness != timesecs:
+            if timesecs % 2 == 0:
+                dot_type = self.drop_dot()
+            else:
+                dot_type = None
         self.random_walk()
         self.check_edge_collision()
+        self.timeawareness = timesecs
+        return dot_type

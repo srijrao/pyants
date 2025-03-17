@@ -1,7 +1,7 @@
 import settings
 
 class Dot:
-    def __init__(self, position=[0, 0], type="to food"):
+    def __init__(self, position=[0, 0], type="to home"):
         self.position = position
         self.type = type
         self.setup()
