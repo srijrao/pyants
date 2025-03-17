@@ -6,6 +6,7 @@ import settings
 from dots import Dot
 from ants import Ant
 from antcolony import Anthill
+from food import Food
 
 
 WHITE = settings.WHITE
@@ -63,18 +64,19 @@ class Game:
         self.lastframetime = pygame.time.get_ticks()
 
     def create_population(self):
-        barier = settings.Anthill_size * 2
+        barrier = settings.Anthill_size * 2
         self.anthills = [
             Anthill(
                 position=[
-                    random.randint(barier, self.width - barier),
-                    random.randint(barier, self.height - barier),
+                    random.randint(barrier, self.width - barrier),
+                    random.randint(barrier, self.height - barrier),
                 ]
             )
         ]
         self.dots = [Dot() for _ in range(10)]
         # Initialize ants at the position of the first anthill
         self.ants = [Ant(position=self.anthills[0].position) for _ in range(1)]
+        self.food = [Food() for _ in range(1)]
 
     def create_ant_from_anthill(self, anthill):
         """
@@ -199,10 +201,20 @@ class Game:
             [anthill for anthill in self.anthills]
             + [dots for dots in self.dots if dots.active]
             + [ants for ants in self.ants if ants.alive]
+            + [food for food in self.food]
         )
         # """ Draw Anthills """
         for anthill in self.anthills:
             visualpacket = anthill.visual()
+            pygame.draw.circle(
+                self.screen,
+                visualpacket["color"],
+                visualpacket["position"],
+                visualpacket["size"],
+            )
+        # """ Draw Food """
+        for food in self.food:
+            visualpacket = food.visual()
             pygame.draw.circle(
                 self.screen,
                 visualpacket["color"],

@@ -1,25 +1,30 @@
 import settings
 import random
 
-class Anthill:
-    def __init__(self, position=None, size=settings.Anthill_size):
+
+class Food:
+    def __init__(self, position=None):
+        self.size = settings.Anthill_size * 2
         if position is None:
             self.randompositionsetter()
         else:
             self.position = position
-        self.size = size
-        self.color = settings.WHITE
+        self.color = settings.GREEN
         self.visual_packet = None
-            
+        
+
+    def visual(self):
+        self.visual_packet = {
+            "position": self.position,
+            "color": self.color,
+            "size": self.size,
+        }
+        return self.visual_packet
+
     def randompositionsetter(self):
-        barrier = settings.Anthill_size * 2
+        barrier = self.size
         position = [
             random.randint(barrier, settings.width - barrier),
             random.randint(barrier, settings.height - barrier),
         ]
         self.position = position
-
-
-    def visual(self):
-        self.visual_packet = {"position": self.position, "size": self.size, "color": self.color}
-        return self.visual_packet
