@@ -14,7 +14,7 @@ class Dot:
         if self.type == "to food":
             self.color = settings.GREEN
         elif self.type == "to home":
-            self.color = settings.RED
+            self.color = settings.PURPLE
         else:
             self.color = settings.WHITE
 

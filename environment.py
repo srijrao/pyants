@@ -1,5 +1,6 @@
 import pygame
 import settings
+from dots import Dot
 import sys
 
 WHITE = settings.WHITE
@@ -20,6 +21,9 @@ class Game:
         self.info_lines = []
         self.actual_fps = 1
 
+        self.dots = []
+        self.paused = False
+
         # Render Screen
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption(settings.name)
@@ -36,6 +40,12 @@ class Game:
         # Stores the current time for the next frame
         self.lastframetime = pygame.time.get_ticks()
 
+    def updatesimulation(self):
+        for dot in self.dots:
+            dot.update()
+        # Remove dots that are not active
+        self.dots = [dot for dot in self.dots if dot.active]
+
     def run(self):
         while self.running:
             self.frame_count += 1
@@ -50,6 +60,8 @@ class Game:
                     self.handle_keydown(event)
                 elif event.type == pygame.KEYUP:
                     self.handle_keyup(event)
+            if self.paused is False:
+                self.updatesimulation()
 
             self.screen.fill(BGBROWN)  # Dark brown color
             self.draw()
@@ -94,6 +106,11 @@ class Game:
         ]
 
     def draw(self):
+        
+        # """ Draw Dots """
+        for dot in self.dots:
+            pygame.draw.circle(self.screen, dot.color, dot.position, dot.size)
+
         # Draw UI text
         self.info_lines_calc()
         y_offset = 10
