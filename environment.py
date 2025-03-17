@@ -67,8 +67,8 @@ class Game:
         self.anthills = [
             Anthill(
                 position=[
-                    random.randint(barier, self.width-barier),
-                    random.randint(barier, self.height-barier),
+                    random.randint(barier, self.width - barier),
+                    random.randint(barier, self.height - barier),
                 ]
             )
         ]
@@ -76,18 +76,61 @@ class Game:
         # Initialize ants at the position of the first anthill
         self.ants = [Ant(position=self.anthills[0].position) for _ in range(1)]
 
+    def create_ant_from_anthill(self, anthill):
+        """
+        Creates an ant at the position of the given anthill.
+
+        Args:
+            anthill (Anthill): The anthill from which to create the ant.
+        """
+        self.ants.append(Ant(position=anthill.position))
+
+    def slimemold(self):
+        """
+        Controls the population of dots and ants in the environment.
+        """
+        try:
+            if self.frame_count == 0:
+                if self.actual_fps > (self.targetfps // 2):
+                    new_ants = [Ant(position=ant.position) for ant in self.ants]
+                    self.ants.extend(new_ants)
+        except Exception as e:
+            print(e)
+            self.create_population()
+
+    def population_control(self):
+        """
+        Controls the population of dots and ants in the environment.
+        """
+        try:
+            if self.frame_count == 0:
+                if self.actual_fps > (self.targetfps // 2):
+                    self.create_ant_from_anthill(self.anthills[0])
+                if self.actual_fps < (self.targetfps // 2):
+                    for _ in range(len(self.dots) // 2):
+                        self.dots.pop()
+                    for _ in range(len(self.ants) // 2):
+                        self.ants.pop()
+
+        except Exception as e:
+            print(e)
+            self.create_population()
+
+        self.dots = [dot for dot in self.dots if dot.active]
+        self.ants = [ant for ant in self.ants if ant.alive]
+        random.shuffle(self.ants)
+        random.shuffle(self.dots)
+
     def update_simulation(self):
         for dot in self.dots:
             dot.update()
-        # Remove dots that are not active
-        self.dots = [dot for dot in self.dots if dot.active]
 
         for ant in self.ants:
             dot_type = ant.act(int(self.secs))
             if dot_type:
                 self.dots.append(Dot(ant.position, dot_type))
-        # Remove ants that are not active
-        self.ants = [ant for ant in self.ants if ant.alive]
+
+        self.population_control()
 
     def run(self):
         while self.running:
@@ -146,6 +189,9 @@ class Game:
             f"FPS: {self.actual_fps:.2f}",
             f"Time: {self.secs:.2f} secs",
             f"Frame: {self.frame_count}",
+            f"Ants: {len(self.ants)}",
+            f"Dots: {len(self.dots)}",
+            f"Anthills: {len(self.anthills)}",
         ]
 
     def draw(self):
