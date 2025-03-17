@@ -4,9 +4,8 @@ import random
 
 
 class Ant:
-    def __init__(self, position=[0, 0], direction=[0, 0]):
+    def __init__(self, position=[settings.width / 2, settings.height / 2]):
         self.position = position
-        self.direction = direction
         self.setup()
 
     def setup(self):
@@ -16,7 +15,6 @@ class Ant:
         self.organism_width = 5
         self.num_sides = 3
         self.angle = 0
-        self.position = [settings.width / 2, settings.height / 2]
         self.screen_w = settings.width
         self.screen_h = settings.height
         self.collision_distance = settings.collision_distance
@@ -132,16 +130,17 @@ class Ant:
         """
         Check if the organism is near screen edges and handle accordingly.
         """
+        distance = self.collision_distance
         position = self.position
         x, y = position[0], position[1]
         collision_angle = None
-        if x < self.barrier_distance:  # Hits left edge
+        if x < distance:  # Hits left edge
             collision_angle = 180
-        elif x > self.screen_w - self.barrier_distance:  # Hits right edge
+        elif x > self.screen_w - distance:  # Hits right edge
             collision_angle = 0
-        elif y < self.barrier_distance:  # Hits top edge
+        elif y < distance:  # Hits top edge
             collision_angle = 90
-        elif y > self.screen_h - self.barrier_distance:  # Hits bottom edge
+        elif y > self.screen_h - distance:  # Hits bottom edge
             collision_angle = 270
 
         if collision_angle is not None:
@@ -169,14 +168,15 @@ class Ant:
         """
         Ensure the ants's position stays within the screen bounds.
         """
+        distance = self.barrier_distance
         position = self.position
         new_x = max(
-            self.collision_distance,
-            min(position[0], self.screen_w - self.collision_distance),
+            distance,
+            min(position[0], self.screen_w - distance),
         )
         new_y = max(
-            self.collision_distance,
-            min(position[1], self.screen_h - self.collision_distance),
+            distance,
+            min(position[1], self.screen_h - distance),
         )
         self.position = [new_x, new_y]
 

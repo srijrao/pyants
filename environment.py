@@ -63,15 +63,17 @@ class Game:
         self.lastframetime = pygame.time.get_ticks()
 
     def create_population(self):
+        barier = settings.Anthill_size * 2
         self.anthills = [
             Anthill(
-                [
-                    random.randint(0, self.width),
-                    random.randint(0, self.height),
+                position=[
+                    random.randint(barier, self.width-barier),
+                    random.randint(barier, self.height-barier),
                 ]
             )
         ]
         self.dots = [Dot() for _ in range(10)]
+        # Initialize ants at the position of the first anthill
         self.ants = [Ant(position=self.anthills[0].position) for _ in range(1)]
 
     def update_simulation(self):
@@ -147,10 +149,20 @@ class Game:
         ]
 
     def draw(self):
-        self.onscreen = ([anthill for anthill in self.anthills]
+        self.onscreen = (
+            [anthill for anthill in self.anthills]
             + [dots for dots in self.dots if dots.active]
             + [ants for ants in self.ants if ants.alive]
         )
+        # """ Draw Anthills """
+        for anthill in self.anthills:
+            visualpacket = anthill.visual()
+            pygame.draw.circle(
+                self.screen,
+                visualpacket["color"],
+                visualpacket["position"],
+                visualpacket["size"],
+            )
         # """ Draw Dots """
         for dot in self.dots:
             visualpacket = dot.visual()
@@ -217,11 +229,17 @@ class Game:
                     items_in_polygon.append(item)
             else:
                 try:
-                    if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(item.position):  # Check if the item is within the polygon
+                    if pygame.draw.polygon(
+                        self.screen, (0, 0, 0), polygon, 1
+                    ).collidepoint(
+                        item.position
+                    ):  # Check if the item is within the polygon
                         items_in_polygon.append(item)
                 except AttributeError:
                     visual_packet = item.visual()
-                    if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(visual_packet["position"]):
+                    if pygame.draw.polygon(
+                        self.screen, (0, 0, 0), polygon, 1
+                    ).collidepoint(visual_packet["position"]):
                         items_in_polygon.append(item)
 
         return items_in_polygon
