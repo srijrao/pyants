@@ -1,8 +1,12 @@
 import pygame
+import sys
+import random
+
 import settings
 from dots import Dot
 from ants import Ant
-import sys
+from antcolony import Anthill
+
 
 WHITE = settings.WHITE
 BROWN = settings.BROWN
@@ -22,9 +26,10 @@ class Game:
         self.lastframetime = None
         self.info_lines = []
         self.actual_fps = 1
-
         self.dots = []
         self.ants = []
+        self.anthills = []
+        self.onscreen = []
 
         self.paused = False
         self.create_population()
@@ -58,8 +63,16 @@ class Game:
         self.lastframetime = pygame.time.get_ticks()
 
     def create_population(self):
+        self.anthills = [
+            Anthill(
+                [
+                    random.randint(0, self.width),
+                    random.randint(0, self.height),
+                ]
+            )
+        ]
         self.dots = [Dot() for _ in range(10)]
-        self.ants = [Ant() for _ in range(1)]
+        self.ants = [Ant(position=self.anthills[0].position) for _ in range(1)]
 
     def update_simulation(self):
         for dot in self.dots:
@@ -134,9 +147,10 @@ class Game:
         ]
 
     def draw(self):
-        self.onscreen = [dots for dots in self.dots if dots.active] + [
-            ants for ants in self.ants if ants.alive
-        ]
+        self.onscreen = ([anthill for anthill in self.anthills]
+            + [dots for dots in self.dots if dots.active]
+            + [ants for ants in self.ants if ants.alive]
+        )
         # """ Draw Dots """
         for dot in self.dots:
             visualpacket = dot.visual()
@@ -199,14 +213,16 @@ class Game:
             elif isinstance(item, Ant):
                 if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(
                     item.position
-                ): # Check if the ant is within the polygon
+                ):  # Check if the ant is within the polygon
                     items_in_polygon.append(item)
             else:
-                visual_packet = item.visual()
-                if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(
-                    visual_packet["position"]
-                ): # Check if the item is within the polygon
-                    items_in_polygon.append(item)
+                try:
+                    if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(item.position):  # Check if the item is within the polygon
+                        items_in_polygon.append(item)
+                except AttributeError:
+                    visual_packet = item.visual()
+                    if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(visual_packet["position"]):
+                        items_in_polygon.append(item)
 
         return items_in_polygon
 

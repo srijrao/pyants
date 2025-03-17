@@ -1,7 +1,7 @@
 import settings
 
 class Anthill:
-    def __init__(self, position, size=10):
+    def __init__(self, position, size=20):
         self.position = position
         self.size = size
         self.color = settings.WHITE
