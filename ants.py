@@ -189,7 +189,7 @@ class Ant:
         self.rotate(clockwise=random.choice([True, False]))
         self.move(forward=True)
 
-    def calculate_view_triangle(self, vision_distance=None):
+    def calculate_view_triangle(self, vision_distance=None,fieldofvision=90):
         """
         Calculate the vertices of the view triangle representing the ant's field of vision.
         Args:
@@ -201,8 +201,8 @@ class Ant:
             vision_distance = self.collision_distance * 5
         angle_rad = math.radians(self.angle)
         half_fov_rad = math.radians(
-            45
-        )  # 90 degrees field of vision, so 45 degrees on each side
+            fieldofvision / 2
+        )  # half on each side
 
         # Calculate the front vertex of the triangle
         front_x = self.position[0] + vision_distance * math.cos(angle_rad)
