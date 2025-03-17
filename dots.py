@@ -13,11 +13,11 @@ class Dot:
         self.timeleft = settings.dot_time
         self.active = True
         if self.type == "to food":
-            self.color = settings.GREEN
-        elif self.type == "to home":
             self.color = settings.PURPLE
-        else:
+        elif self.type == "to home":
             self.color = settings.WHITE
+        else:
+            self.color = settings.BLACK
 
     def update(self):
         """update function for the dot"""
