@@ -158,6 +158,29 @@ class Game:
                 self.screen.blit(text_surface, (10, y_offset))
             y_offset += 18
 
+    def get_items_in_polygon(self, polygon):
+        """
+        Returns a list of all items (dots and ants) within the given polygon.
+
+        Args:
+            polygon (list of tuples): A list of (x, y) tuples representing the vertices of the polygon.
+
+        Returns:
+            list: A list of items (dots and ants) within the polygon.
+        """
+        items_in_polygon = []
+
+        # Check dots
+        for dot in self.dots:
+            if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(dot.position):
+                items_in_polygon.append(dot)
+
+        # Check ants
+        for ant in self.ants:
+            if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(ant.position):
+                items_in_polygon.append(ant)
+
+        return items_in_polygon
 
 if __name__ == "__main__":
     game = Game()
