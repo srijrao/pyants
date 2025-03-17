@@ -137,10 +137,9 @@ class Ant:
 
         if collision_angle is not None:
             self.screen_clamp()
-            print("Collision detected at angle:", collision_angle)
             self.bounce(angle=collision_angle)
 
-    def bounce(self, angle=None):    
+    def bounce(self, angle=None):
         """
         Bounce the organism off the screen edges.
         """
@@ -149,16 +148,9 @@ class Ant:
             angle = angle % 360
             self.angle = (2 * angle - current_angle) % 360
         else:
-            if current_angle == 0:
-                self.angle = 180
-            elif current_angle == 90:
-                self.angle = 270
-            elif current_angle == 180:
-                self.angle = 0
-            elif current_angle == 270:
-                self.angle = 90
-            else:
-                self.angle = (180 - current_angle) % 360
+            self.angle = (180 - current_angle) % 360
+
+        self.move()
 
     def screen_clamp(self):
         """
