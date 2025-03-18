@@ -227,14 +227,40 @@ class Ant:
             (right_x, right_y),
         ]
 
-    def act(self, timesecs):
-        """ "
-        go
+    def find_newest_visible_dot(self, environment):
+        """
+        Find the newest (highest timeleft) dot in the ant's field of vision.
+        """
+        view_triangle = self.calculate_view_triangle()
+        visible_items = environment.get_items_in_polygon(view_triangle)
+        visible_dots = [item for item in visible_items if isinstance(item, type(environment.dots[0]))]
+        
+        if not visible_dots:
+            return None
+            
+        # Sort by timeleft (newest first)
+        newest_dot = max(visible_dots, key=lambda dot: dot.timeleft)
+        return newest_dot
+
+    def act(self, timesecs, environment=None):
+        """
+        Act based on environment and time.
         """
         dot_type = None
         if self.timeawareness != timesecs:
             dot_type = self.drop_dot()
-        self.random_walk()
+            
+        if environment:
+            # Look for dots and move towards newest one if found
+            nearest_dot = self.find_newest_visible_dot(environment)
+            if nearest_dot:
+                self.turn_towards(nearest_dot.position)
+                self.move(forward=True)
+            else:
+                self.random_walk()
+        else:
+            self.random_walk()
+            
         self.check_edge_collision()
         self.timeawareness = timesecs
         return dot_type

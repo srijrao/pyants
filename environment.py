@@ -128,7 +128,7 @@ class Game:
             dot.update()
 
         for ant in self.ants:
-            dot_type = ant.act(int(self.secs))
+            dot_type = ant.act(int(self.secs), self)
             if dot_type:
                 self.dots.append(Dot(ant.position, dot_type))
 
