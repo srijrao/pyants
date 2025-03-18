@@ -10,11 +10,11 @@ class Ant:
 
     def setup(self):
         self.alive = True
-        self.color = settings.PURPLE
+        self.color = (random.randint(10, 200), random.randint(10, 200), random.randint(10, 200))
         self.organism_height = 10
         self.organism_width = 5
-        self.num_sides = 3
-        self.angle = 0
+        self.num_sides = random.randint(3, 8)
+        self.angle = random.randint(0, 360)
         self.screen_w = settings.width
         self.screen_h = settings.height
         self.collision_distance = settings.collision_distance
