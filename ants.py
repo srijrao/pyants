@@ -175,11 +175,13 @@ class Ant:
     def drop_dot(self):
         """
         Drop a dot at the current position of the ant.
+        When not carrying food: Drop 'to home' dots
+        When carrying food: Drop 'to food' dots
         """
         if self.foodbool:
-            dot_type = "to home"
-        else:
             dot_type = "to food"
+        else:
+            dot_type = "to home"
         return dot_type
 
     def random_walk(self):
@@ -230,10 +232,16 @@ class Ant:
     def find_newest_visible_dot(self, environment):
         """
         Find the newest (highest timeleft) dot in the ant's field of vision.
+        Only perceives dots of appropriate type based on foodbool state.
         """
         view_triangle = self.calculate_view_triangle()
         visible_items = environment.get_items_in_polygon(view_triangle)
-        visible_dots = [item for item in visible_items if isinstance(item, type(environment.dots[0]))]
+        
+        # Only perceive dots of appropriate type
+        target_type = "to home" if self.foodbool else "to food"
+        visible_dots = [item for item in visible_items 
+                       if isinstance(item, type(environment.dots[0])) 
+                       and item.type == target_type]
         
         if not visible_dots:
             return None
@@ -251,10 +259,24 @@ class Ant:
             dot_type = self.drop_dot()
             
         if environment:
-            # Look for dots and move towards newest one if found
+            # Check for food if not carrying any
+            if not self.foodbool:
+                view_triangle = self.calculate_view_triangle()
+                visible_items = environment.get_items_in_polygon(view_triangle)
+                visible_food = [item for item in visible_items if isinstance(item, type(environment.food[0]))]
+                if visible_food:
+                    # Found food - pick it up and set foodbool
+                    self.foodbool = True
+                    self.turn_towards(visible_food[0].position)
+                    self.move(forward=True)
+                    return dot_type
+            
+            # Look for newest appropriate dot
             nearest_dot = self.find_newest_visible_dot(environment)
             if nearest_dot:
-                self.turn_towards(nearest_dot.position)
+                # Follow the newest dot of appropriate type
+                newest_dot = nearest_dot
+                self.turn_towards(newest_dot.position)
                 self.move(forward=True)
             else:
                 self.random_walk()
