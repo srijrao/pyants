@@ -2,9 +2,10 @@ import settings
 
 
 class Dot:
-    def __init__(self, position=[0, 0], type="to home"):
+    def __init__(self, position=[0, 0], type="to home",time=0):
         self.position = position
         self.type = type
+        self.time = time
         self.setup()
 
     def setup(self):
@@ -18,12 +19,6 @@ class Dot:
             self.color = settings.WHITE
         else:
             self.color = settings.BLACK
-
-    def update(self):
-        """update function for the dot"""
-        self.timeleft -= 1
-        if self.timeleft <= 0:
-            self.active = False
 
     def get_alpha(self):
         """Calculate the alpha value based on time left"""
