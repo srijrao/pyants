@@ -31,7 +31,6 @@ class Game:
         self.ants = []
         self.anthills = []
         self.onscreen = []
-
         self.paused = False
         self.create_population()
         # Render Screen
@@ -73,8 +72,6 @@ class Game:
                 ]
             )
         ]
-        self.dots = [Dot() for _ in range(10)]
-        # Initialize ants at the position of the first anthill
         self.ants = [Ant(position=self.anthills[0].position) for _ in range(1)]
         self.food = [Food() for _ in range(1)]
 
@@ -87,32 +84,20 @@ class Game:
         """
         self.ants.append(Ant(position=anthill.position))
 
-    def slimemold(self):
-        """
-        Controls the population of dots and ants in the environment.
-        """
-        try:
-            if self.frame_count == 0:
-                if self.actual_fps > (self.targetfps // 2):
-                    new_ants = [Ant(position=ant.position) for ant in self.ants]
-                    self.ants.extend(new_ants)
-        except Exception as e:
-            print(e)
-            self.create_population()
-
     def population_control(self):
         """
         Controls the population of dots and ants in the environment.
         """
         try:
             if self.frame_count == 0:
-                if self.actual_fps > (self.targetfps // 2):
+                if self.actual_fps > (self.targetfps // 10):
                     self.create_ant_from_anthill(self.anthills[0])
-                if self.actual_fps < (self.targetfps // 2):
-                    for _ in range(len(self.dots) // 2):
+                if self.actual_fps < (self.targetfps // 10):
+                    for _ in range(1):
                         self.dots.pop()
-                    for _ in range(len(self.ants) // 2):
-                        self.ants.pop()
+                    for _ in range(1):
+                        if self.ants[0].foodbool is False:
+                            self.ants[0].alive = False
 
         except Exception as e:
             print(e)
@@ -128,9 +113,9 @@ class Game:
             dot.update()
 
         for ant in self.ants:
-            dot_type = ant.act(int(self.secs), self)
+            dot_type, dottime = ant.act(self)
             if dot_type:
-                self.dots.append(Dot(ant.position, dot_type))
+                self.dots.append(Dot(ant.position, dot_type,dottime))
 
         self.population_control()
 
@@ -304,5 +289,5 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game()
+    game = Game(True)
     game.run()
