@@ -93,7 +93,7 @@ class Game:
                 if self.actual_fps > (self.targetfps // 10):
                     self.create_ant_from_anthill(self.anthills[0])
                 if self.actual_fps < (self.targetfps // 10):
-                    for _ in range(1):
+                    for _ in range(len(self.dots)//3):
                         self.dots.pop()
                     for _ in range(1):
                         if self.ants[0].foodbool is False:
