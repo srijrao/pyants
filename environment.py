@@ -74,7 +74,7 @@ class Game:
         # Cache anthill surface
         anthill_size = settings.Anthill_size * 2
         anthill_surf = pygame.Surface((anthill_size, anthill_size), pygame.SRCALPHA)
-        pygame.draw.circle(anthill_surf, WHITE, (settings.Anthill_size, settings.Anthill_size), settings.Anthill_size)
+        pygame.draw.circle(anthill_surf, (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255)), (settings.Anthill_size, settings.Anthill_size), settings.Anthill_size)
         self._surface_cache['anthill'] = anthill_surf
         
         # Cache dot surfaces for both colors
@@ -224,6 +224,7 @@ class Game:
         
     def cut_dots_population(self):
         """Reduce the number of pheromone dots by half."""
+        random.shuffle(self.dots)
         dots_to_remove = len(self.dots) // 2
         removed_dots = self.dots[dots_to_remove:]
         self.dots = self.dots[:dots_to_remove]
@@ -342,7 +343,8 @@ class Game:
                     visual["position"][1] - visual["size"]
                 )
                 self.screen.blit(self._surface_cache[surf_key], pos)
-        
+        if len(self.dots) > 20000:
+            self.cut_dots_population()
         # Draw ants
         for ant in self.ants:
             visual = ant.visual()

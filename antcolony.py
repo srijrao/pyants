@@ -39,7 +39,7 @@ class Anthill:
         else:
             self.position = position
         self.size = size
-        self.color = settings.WHITE
+        self.color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
         self.visual_packet = None
             
     def randompositionsetter(self):
