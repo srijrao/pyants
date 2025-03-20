@@ -1,3 +1,11 @@
+"""
+Environment Module for Ant Colony Simulation
+
+This module defines the Game class which manages the entire ant colony simulation.
+It handles the simulation loop, rendering, input processing, and maintains the state
+of all entities including ants, food sources, anthills, and pheromone trails.
+"""
+
 import pygame
 import sys
 import random
@@ -8,20 +16,56 @@ from ants import Ant
 from antcolony import Anthill
 from food import Food
 
-
 WHITE = settings.WHITE
 BROWN = settings.BROWN
 
-
 class Game:
+    """
+    Main game class that manages the ant colony simulation.
+    
+    This class is responsible for initializing the pygame environment,
+    managing all simulation entities (ants, food, anthills, dots),
+    handling user input, updating the simulation state, and rendering
+    the simulation to the screen.
+
+    Attributes:
+        debug (bool): Enable/disable debug visualization
+        width (int): Window width in pixels
+        height (int): Window height in pixels
+        targetfps (int): Target frames per second
+        frame_count (int): Current frame number
+        start_time (int): Simulation start time in milliseconds
+        secs (float): Total elapsed time in seconds
+        active_keys (set): Currently pressed keys
+        lastframetime (int): Time of last frame for delta time calculation
+        info_lines (list): Debug information to display
+        actual_fps (float): Current frames per second
+        dots (list): Active pheromone markers
+        ants (list): Active ants in simulation
+        anthills (list): Anthills in simulation
+        food (list): Food sources in simulation
+        onscreen (list): All visible entities
+        paused (bool): Simulation pause state
+        screen (pygame.Surface): Main display surface
+        clock (pygame.time.Clock): Game clock for timing
+        font (pygame.font.Font): Font for debug text
+        running (bool): Main loop control flag
+    """
+
     def __init__(self, debug=False):
+        """
+        Initialize the game environment.
+
+        Args:
+            debug (bool, optional): Enable debug visualization. Defaults to False.
+        """
         pygame.init()
         self.debug = debug
         self.width = settings.width
         self.height = settings.height
         self.targetfps = settings.targetfps
         self.frame_count = 0
-        self.start_time = pygame.time.get_ticks()  # Store the start time
+        self.start_time = pygame.time.get_ticks()
         self.secs = 0
         self.active_keys = set()
         self.lastframetime = None
@@ -45,24 +89,23 @@ class Game:
         """
         Updates the elapsed time for the environment.
 
-        This method calculates the time elapsed since the last frame and adds it to the total elapsed time (`self.secs`).
-        It also updates `self.lastframetime` to the current time for use in the next frame.
-
-        If `self.lastframetime` is None, it initializes it with `self.start_time`.
-
-        Attributes:
-            self.lastframetime (int or None): The time of the last frame in milliseconds.
-            self.start_time (int): The start time of the environment in milliseconds.
-            self.secs (float): The total elapsed time in seconds.
+        This method calculates the time elapsed since the last frame and adds it to
+        the total elapsed time (self.secs). It also updates lastframetime to the
+        current time for use in the next frame.
         """
         if not self.lastframetime:
             self.lastframetime = self.start_time
-        if self.lastframetime:  # If lastframetime is not None # Update the elapsed time
+        if self.lastframetime:
             self.secs += (pygame.time.get_ticks() - self.lastframetime) / 1000
-        # Stores the current time for the next frame
         self.lastframetime = pygame.time.get_ticks()
 
     def create_population(self):
+        """
+        Initialize the simulation entities.
+
+        Creates the initial anthills, ants, and food sources with appropriate
+        positioning within the simulation boundaries.
+        """
         barrier = settings.Anthill_size * 2
         self.anthills = [
             Anthill(
@@ -77,17 +120,20 @@ class Game:
 
     def create_ant_from_anthill(self, anthill):
         """
-        Creates an ant at the position of the given anthill.
+        Creates new ants at a specified anthill's position.
 
         Args:
-            anthill (Anthill): The anthill from which to create the ant.
+            anthill (Anthill): The anthill from which to spawn new ants.
         """
         for _ in range(2):
             self.ants.append(Ant(position=anthill.position))
 
     def population_control(self):
         """
-        Controls the population of dots and ants in the environment.
+        Manages the population of entities in the simulation.
+
+        This method handles the creation of new ants and cleanup of inactive
+        entities based on performance metrics and simulation rules.
         """
         try:
             if self.frame_count == 0:
@@ -96,69 +142,94 @@ class Game:
                 if self.actual_fps < (self.targetfps // 3):
                     for _ in range(len(self.ants)*2):
                         self.dots.pop()
-                        '''for _ in range(1):
-                        if self.ants[0].foodbool is False:
-                            self.ants[0].alive = False'''
-
         except Exception as e:
             print(e)
             self.create_population()
 
+        # Clean up inactive entities
         self.dots = [dot for dot in self.dots if dot.active]
         self.ants = [ant for ant in self.ants if ant.alive]
+        # Randomize order for fairness
         random.shuffle(self.ants)
         random.shuffle(self.dots)
 
     def update_simulation(self):
+        """
+        Update the state of all simulation entities.
+
+        Updates each ant's state and handles the creation of new pheromone dots.
+        Also manages population control based on performance metrics.
+        """
         for ant in self.ants:
             try:
                 dot_type, dottime = ant.act(self)
                 if dot_type:
-                    self.dots.append(Dot(ant.position, dot_type,dottime))
+                    self.dots.append(Dot(ant.position, dot_type, dottime))
             except Exception as e:
                 print(e)
 
         self.population_control()
 
     def run(self):
+        """
+        Main game loop.
+
+        Handles the core simulation loop including:
+        - Event processing
+        - State updates
+        - Rendering
+        - Frame timing
+        """
         while self.running:
             self.frame_count += 1
             self.timepiece()
             if self.frame_count >= self.actual_fps:
                 self.frame_count = 0
+            
+            # Handle events
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                # """ Key Handling"""
                 elif event.type == pygame.KEYDOWN:
                     self.handle_keydown(event)
                 elif event.type == pygame.KEYUP:
                     self.handle_keyup(event)
+                    
+            # Update simulation state
             if self.paused is False:
                 self.update_simulation()
 
-            self.screen.fill(BROWN)  # Dark brown color
+            # Render frame
+            self.screen.fill(BROWN)
             self.draw()
             pygame.display.flip()
-            # Limit the frame rate
+            
+            # Control frame rate
             self.clock.tick(settings.targetfps)
 
         pygame.quit()
         sys.exit()
 
-    # """ Modifiers Functions"""
-
     def quitter(self):
+        """Stop the simulation."""
         self.running = False
         
     def cut_dots_population(self):
-        """Cuts the dot population in half"""
+        """
+        Reduce the number of pheromone dots by half.
+        
+        Used as a performance optimization when needed.
+        """
         dots_to_remove = len(self.dots) // 2
         self.dots = self.dots[dots_to_remove:]
 
-    # """ Key Handling Functions"""
-
     def handle_keydown(self, event):
+        """
+        Handle keyboard press events.
+
+        Args:
+            event (pygame.event.Event): Keyboard event to process
+        """
         actions = {
             pygame.K_q: self.quitter,
             pygame.K_s: self.cut_dots_population,
@@ -167,17 +238,25 @@ class Game:
         if action:
             action()
         else:
-            # Add key to active keys for continuous actions
             self.active_keys.add(event.key)
 
     def handle_keyup(self, event):
-        # Remove key from active keys when released
+        """
+        Handle keyboard release events.
+
+        Args:
+            event (pygame.event.Event): Keyboard event to process
+        """
         if event.key in self.active_keys:
             self.active_keys.remove(event.key)
 
-    # """ Rendering Functions"""
-
     def info_lines_calc(self):
+        """
+        Calculate debug information for display.
+
+        Updates FPS counter and generates status information about
+        the current simulation state.
+        """
         self.actual_fps = self.clock.get_fps()
         self.info_lines = [
             f"FPS: {self.actual_fps:.2f}",
@@ -189,13 +268,24 @@ class Game:
         ]
 
     def draw(self):
+        """
+        Render the current simulation state.
+
+        Draws all visible entities to the screen including:
+        - Anthills
+        - Food sources
+        - Pheromone dots (with transparency)
+        - Ants
+        - Debug information (if enabled)
+        """
         self.onscreen = (
             [anthill for anthill in self.anthills]
             + [dots for dots in self.dots if dots.active]
             + [ants for ants in self.ants if ants.alive]
             + [food for food in self.food]
         )
-        # """ Draw Anthills """
+        
+        # Draw Anthills
         for anthill in self.anthills:
             visualpacket = anthill.visual()
             pygame.draw.circle(
@@ -204,7 +294,8 @@ class Game:
                 visualpacket["position"],
                 visualpacket["size"],
             )
-        # """ Draw Food """
+            
+        # Draw Food
         for food in self.food:
             visualpacket = food.visual()
             pygame.draw.circle(
@@ -213,11 +304,10 @@ class Game:
                 visualpacket["position"],
                 visualpacket["size"],
             )
-        # """ Draw Dots """
+            
+        # Draw Dots with transparency
         for dot in self.dots:
             visualpacket = dot.visual()
-
-            # Create a temporary surface with per-pixel alpha
             temp_surface = pygame.Surface(
                 (visualpacket["size"] * 2, visualpacket["size"] * 2), pygame.SRCALPHA
             )
@@ -227,8 +317,6 @@ class Game:
                 (visualpacket["size"], visualpacket["size"]),
                 visualpacket["size"],
             )
-
-            # Blit the temporary surface onto the main screen
             self.screen.blit(
                 temp_surface,
                 (
@@ -237,7 +325,7 @@ class Game:
                 ),
             )
 
-        # """ Draw Ants """
+        # Draw Ants
         for ant in self.ants:
             visualpacket = ant.visual()
             pygame.draw.polygon(
@@ -246,7 +334,7 @@ class Game:
             if self.debug is True:
                 pygame.draw.polygon(self.screen, WHITE, ant.calculate_view_triangle())
 
-        # Draw UI text
+        # Draw debug information
         self.info_lines_calc()
         y_offset = 10
         for line in self.info_lines:
@@ -257,25 +345,28 @@ class Game:
 
     def get_items_in_polygon(self, polygon):
         """
-        Returns a list of all items (dots and ants) within the given polygon.
+        Find all simulation entities within a given polygon.
+
+        This method is used primarily for ant vision calculations to determine
+        what entities an ant can "see" within its field of view.
 
         Args:
-            polygon (list of tuples): A list of (x, y) tuples representing the vertices of the polygon.
+            polygon (list): List of (x, y) tuples defining the polygon vertices
 
         Returns:
-            list: A list of items (dots and ants) within the polygon.
+            list: All entities (dots, ants, food, etc.) within the polygon
         """
         items_in_polygon = []
         for item in self.onscreen:
             if isinstance(item, Dot):
                 if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(
                     item.position
-                ):  # Check if the dot is within the polygon
+                ):
                     items_in_polygon.append(item)
             elif isinstance(item, Ant):
                 if pygame.draw.polygon(self.screen, (0, 0, 0), polygon, 1).collidepoint(
                     item.position
-                ):  # Check if the ant is within the polygon
+                ):
                     items_in_polygon.append(item)
             else:
                 try:
@@ -283,7 +374,7 @@ class Game:
                         self.screen, (0, 0, 0), polygon, 1
                     ).collidepoint(
                         item.position
-                    ):  # Check if the item is within the polygon
+                    ):
                         items_in_polygon.append(item)
                 except AttributeError:
                     visual_packet = item.visual()

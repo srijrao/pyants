@@ -4,7 +4,20 @@ import random
 
 
 class Ant:
+    """
+    Represents an ant in the simulation.
+
+    Each ant has a position, an anthill position, and various attributes
+    that define its behavior.
+    """
     def __init__(self, position=[settings.width / 2, settings.height / 2]):
+        """
+        Initializes an Ant object.
+
+        Args:
+            position (list, optional): The initial position of the ant.
+                Defaults to the center of the screen.
+        """
         self.position = position
         self.anthill_position = position.copy()  # Store anthill position
         self.setup()
