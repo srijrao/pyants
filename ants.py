@@ -10,7 +10,11 @@ class Ant:
 
     def setup(self):
         self.alive = True
-        self.color = (random.randint(10, 200), random.randint(10, 200), random.randint(10, 200))
+        self.color = (
+            random.randint(10, 200),
+            random.randint(10, 200),
+            random.randint(10, 200),
+        )
         self.organism_height = 10
         self.organism_width = 5
         self.num_sides = random.randint(3, 8)
@@ -23,6 +27,7 @@ class Ant:
         self.movement_speed = settings.ant_speed
         self.foodbool = False
         self.timeawareness = 0
+        self.dropbool = True
 
     def calculate_draw_points(self):
         """
@@ -151,7 +156,7 @@ class Ant:
         """
         Bounce the organism off the screen edges.
         """
-        self.angle = self.angle+180 if angle is None else angle+90
+        self.angle = self.angle + 180 if angle is None else angle + 90
         # Move the ant slightly away from the edge to prevent repetitive flipping
         self.move(forward=True)
         self.screen_clamp()
@@ -191,7 +196,7 @@ class Ant:
         self.rotate(clockwise=random.choice([True, False]))
         self.move(forward=True)
 
-    def calculate_view_triangle(self, vision_distance=None,fieldofvision=90):
+    def calculate_view_triangle(self, vision_distance=None, fieldofvision=90):
         """
         Calculate the vertices of the view triangle representing the ant's field of vision.
         Args:
@@ -202,9 +207,7 @@ class Ant:
         if vision_distance is None:
             vision_distance = self.collision_distance * 5
         angle_rad = math.radians(self.angle)
-        half_fov_rad = math.radians(
-            fieldofvision / 2
-        )  # half on each side
+        half_fov_rad = math.radians(fieldofvision / 2)  # half on each side
 
         # Calculate the front vertex of the triangle
         front_x = self.position[0] + vision_distance * math.cos(angle_rad)
@@ -236,41 +239,50 @@ class Ant:
         """
         view_triangle = self.calculate_view_triangle()
         visible_items = environment.get_items_in_polygon(view_triangle)
-        
+
         # Only perceive dots of appropriate type
         target_type = "to home" if self.foodbool else "to food"
-        visible_dots = [item for item in visible_items 
-                       if isinstance(item, type(environment.dots[0])) 
-                       and item.type == target_type]
-        
+        visible_dots = [
+            item
+            for item in visible_items
+            if isinstance(item, type(environment.dots[0])) and item.type == target_type
+        ]
+
         if not visible_dots:
             return None
-            
+
         # Sort by timeleft (newest first)
         newest_dot = max(visible_dots, key=lambda dot: dot.timeleft)
         return newest_dot
 
-    def act(self, timesecs, environment=None):
+    def act(self, environment=None):
         """
         Act based on environment and time.
         """
         dot_type = None
-        if self.timeawareness != timesecs:
+        self.dropbool = not self.dropbool
+        if self.dropbool is True:
             dot_type = self.drop_dot()
-            
+        self.timeawareness +=0.001
+
         if environment:
             # Check for food if not carrying any
             if not self.foodbool:
                 view_triangle = self.calculate_view_triangle()
                 visible_items = environment.get_items_in_polygon(view_triangle)
-                visible_food = [item for item in visible_items if isinstance(item, type(environment.food[0]))]
+                visible_food = [
+                    item
+                    for item in visible_items
+                    if isinstance(item, type(environment.food[0]))
+                ]
                 if visible_food:
                     # Found food - pick it up and set foodbool
                     self.foodbool = True
+                    self.timeawareness = 0
                     self.turn_towards(visible_food[0].position)
                     self.move(forward=True)
                     return dot_type
-            
+
             # Look for newest appropriate dot
             nearest_dot = self.find_newest_visible_dot(environment)
             if nearest_dot:
@@ -282,7 +294,6 @@ class Ant:
                 self.random_walk()
         else:
             self.random_walk()
-            
+
         self.check_edge_collision()
-        self.timeawareness = timesecs
-        return dot_type
+        return dot_type,self.timeawareness
