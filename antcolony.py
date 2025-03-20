@@ -12,7 +12,7 @@ class Anthill:
         self.visual_packet = None
             
     def randompositionsetter(self):
-        barrier = settings.Anthill_size * 2
+        barrier = settings.Anthill_size
         position = [
             random.randint(barrier, settings.width - barrier),
             random.randint(barrier, settings.height - barrier),
