@@ -252,8 +252,8 @@ class Ant:
             if not visible_dots:
                 return None
 
-            # Sort by timeleft (newest first)
-            newest_dot = max(visible_dots, key=lambda dot: dot.time)
+            # Sort by time, shortest time
+            newest_dot = min(visible_dots, key=lambda dot: dot.time)
             return newest_dot
         except Exception:
             pass
