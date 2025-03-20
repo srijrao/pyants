@@ -19,6 +19,13 @@ class Dot:
             self.color = settings.WHITE
         else:
             self.color = settings.BLACK
+        
+
+    def update(self):
+        """update function for the dot"""
+        self.timeleft -= 1
+        if self.timeleft <= 0:
+            self.active = False
 
     def get_alpha(self):
         """Calculate the alpha value based on time left"""
