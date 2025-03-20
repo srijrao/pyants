@@ -40,28 +40,44 @@ class Dot:
             time (float, optional): Time when the dot was created.
                 Used to determine the newest dot. Defaults to 0.
         """
+        # Initialize color attribute first since setup() uses it
+        self.color = None
+        self.reset(position, type, time)
+
+    def reset(self, position=[0, 0], type="to home", time=0):
+        """
+        Reset the dot's state for reuse (supports object pooling).
+
+        Args:
+            position (list, optional): [x, y] coordinates for the dot.
+                Defaults to [0, 0].
+            type (str, optional): Type of pheromone marker - 'to home' or 'to food'.
+                Defaults to 'to home'.
+            time (float, optional): Time when the dot was created.
+                Used to determine the newest dot. Defaults to 0.
+        """
         self.position = position
         self.type = type
         self.time = time
-        self.setup()
-
-    def setup(self):
-        """
-        Initialize the dot's properties.
-
-        Sets up the dot's size, lifetime, activity status, and color based on its type.
-        The color is purple for 'to food' dots and white for 'to home' dots.
-        """
         self.size = settings.dot_size
         self.timeleft = settings.dot_time
         self.active = True
+        
+        # Set color based on type
         if self.type == "to food":
             self.color = settings.PURPLE
         elif self.type == "to home":
             self.color = settings.WHITE
         else:
             self.color = settings.BLACK
-        
+            
+        # Initialize visual packet cache
+        self.visual_packet = {
+            "position": self.position,
+            "size": self.size,
+            "color": (self.color[0], self.color[1], self.color[2], 255),
+        }
+
     def update(self):
         """
         Update the dot's state.
@@ -91,9 +107,11 @@ class Dot:
             dict: Contains position, size, and RGBA color information for rendering.
                 The alpha channel is calculated based on remaining lifetime.
         """
-        self.visual_packet = {
-            "position": self.position,
-            "size": self.size,
-            "color": (self.color[0], self.color[1], self.color[2], self.get_alpha()),
-        }
+        # Update only the alpha value in the cached visual packet
+        self.visual_packet["color"] = (
+            self.color[0], 
+            self.color[1], 
+            self.color[2], 
+            self.get_alpha()
+        )
         return self.visual_packet
