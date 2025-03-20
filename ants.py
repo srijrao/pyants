@@ -2,7 +2,6 @@ import settings
 import math
 import random
 
-
 class Ant:
     """
     Represents an ant in the simulation.
@@ -43,6 +42,8 @@ class Ant:
         self.homebool = False
         self.timeawareness = 0
         self.dropbool = True
+        # Cache for visual packet
+        self.visual_packet = None
 
     def calculate_draw_points(self):
         """
@@ -71,20 +72,20 @@ class Ant:
         return points
 
     def visual(self):
-        points = self.calculate_draw_points()
-        self.visual_packet = {
-            "position": self.position,
-            "points": points,
-            "color": self.color,
-        }
+        """Get visual representation with caching."""
+        if not self.visual_packet or self.position != self.visual_packet["position"]:
+            points = self.calculate_draw_points()
+            self.visual_packet = {
+                "position": self.position.copy(),
+                "points": points,
+                "color": self.color,
+            }
         return self.visual_packet
 
     def distance_to(self, target_position):
         """
         Calculate Euclidean distance to a target position.
         """
-        if not isinstance(self.state, dict):
-            return float("inf")
         position = self.position
         dx = position[0] - target_position[0]
         dy = position[1] - target_position[1]
@@ -105,6 +106,8 @@ class Ant:
                 else -rotation_speed  # Negative if counter-clockwise
             )
             self.angle = (current_angle + delta_angle) % 360
+        # Invalidate visual cache on rotation
+        self.visual_packet = None
 
     def turn_towards(self, target):
         """
@@ -132,6 +135,8 @@ class Ant:
             random.uniform(-jitter, jitter),
         ]
         self.position = [position[0] + deltas[0], position[1] + deltas[1]]
+        # Invalidate visual cache
+        self.visual_packet = None
 
     def move(self, forward=True):
         """
@@ -145,6 +150,8 @@ class Ant:
         new_x = position[0] + movement * math.cos(math.radians(current_angle))
         new_y = position[1] - movement * math.sin(math.radians(current_angle))
         self.position = [new_x, new_y]
+        # Invalidate visual cache
+        self.visual_packet = None
 
     def check_edge_collision(self, constraint=False):
         """
@@ -190,7 +197,10 @@ class Ant:
             distance,
             min(position[1], self.screen_h - distance),
         )
-        self.position = [new_x, new_y]
+        if new_x != position[0] or new_y != position[1]:
+            self.position = [new_x, new_y]
+            # Invalidate visual cache only if position changed
+            self.visual_packet = None
 
     def drop_dot(self):
         """
@@ -277,6 +287,9 @@ class Ant:
         """
         Act based on environment and time.
         """
+        dot_type = None
+        self.dropbool = not self.dropbool
+        
         # Check if ant is at anthill with food
         if self.foodbool:
             distance_to_anthill = math.hypot(
@@ -285,13 +298,11 @@ class Ant:
             )
             if distance_to_anthill < self.collision_distance:
                 self.alive = False
-                return None
+                return (None, self.timeawareness)
 
-        dot_type = None
-        self.dropbool = not self.dropbool
         if self.dropbool is True:
             dot_type = self.drop_dot()
-        self.timeawareness +=0.001
+        self.timeawareness += 0.001
 
         if environment:
             # Check for food if not carrying any
@@ -330,4 +341,4 @@ class Ant:
             self.random_walk()
 
         self.check_edge_collision()
-        return dot_type,self.timeawareness
+        return (dot_type, self.timeawareness)
