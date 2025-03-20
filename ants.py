@@ -252,7 +252,7 @@ class Ant:
             return None
 
         # Sort by timeleft (newest first)
-        newest_dot = max(visible_dots, key=lambda dot: dot.timeleft)
+        newest_dot = max(visible_dots, key=lambda dot: dot.time)
         return newest_dot
 
     def act(self, environment=None):
