@@ -82,7 +82,8 @@ class Game:
         Args:
             anthill (Anthill): The anthill from which to create the ant.
         """
-        self.ants.append(Ant(position=anthill.position))
+        for _ in range(2):
+            self.ants.append(Ant(position=anthill.position))
 
     def population_control(self):
         """
@@ -93,7 +94,7 @@ class Game:
                 if self.actual_fps > (self.targetfps // 3):
                     self.create_ant_from_anthill(self.anthills[0])
                 if self.actual_fps < (self.targetfps // 3):
-                    for _ in range(len(self.dots)//10):
+                    for _ in range(len(self.ants)*2):
                         self.dots.pop()
                         '''for _ in range(1):
                         if self.ants[0].foodbool is False:
@@ -289,5 +290,5 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game(True)
+    game = Game()
     game.run()

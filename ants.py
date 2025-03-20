@@ -6,6 +6,7 @@ import random
 class Ant:
     def __init__(self, position=[settings.width / 2, settings.height / 2]):
         self.position = position
+        self.anthill_position = position.copy()  # Store anthill position
         self.setup()
 
     def setup(self):
@@ -26,6 +27,7 @@ class Ant:
         self.rotation_speed = 10
         self.movement_speed = settings.ant_speed
         self.foodbool = False
+        self.homebool = False
         self.timeawareness = 0
         self.dropbool = True
 
@@ -262,6 +264,16 @@ class Ant:
         """
         Act based on environment and time.
         """
+        # Check if ant is at anthill with food
+        if self.foodbool:
+            distance_to_anthill = math.hypot(
+                self.position[0] - self.anthill_position[0],
+                self.position[1] - self.anthill_position[1]
+            )
+            if distance_to_anthill < self.collision_distance:
+                self.alive = False
+                return None
+
         dot_type = None
         self.dropbool = not self.dropbool
         if self.dropbool is True:
