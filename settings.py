@@ -25,9 +25,9 @@ Simulation Parameters:
     - ant_speed: Movement speed of ants
     - Anthill_size: Size of anthill in pixels
 """
-
-width = 800
-height = 600
+width = 1000
+height = 1000
+area = width*height
 targetfps = 60
 name = "Pyants"
 WHITE = (245, 245, 245)
@@ -37,7 +37,7 @@ RED = (184, 13, 20)
 PURPLE = (154, 11, 160)
 BLACK = (10, 10, 10)
 dot_size = 2
-dot_time = 1000
+dot_time = area*(1/150)
 collision_distance = 10
 ant_speed = 2
 Anthill_size = 10
