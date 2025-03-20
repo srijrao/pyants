@@ -80,15 +80,18 @@ class Game:
         # Cache dot surfaces for both colors
         for size in range(1, settings.dot_size + 1):
             # "to food" dots (purple)
+            # For "to food" (purple) dots
             food_key = f'dot_food_{size}'
-            food_surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
-            pygame.draw.circle(food_surf, settings.PURPLE, (size, size), size)
+            food_surf = pygame.Surface((size * 2, size * 2)).convert_alpha()  # Convert for better performance
+            food_surf.fill((0, 0, 0, 0))  # Fill with transparent black
+            pygame.draw.circle(food_surf, (*settings.PURPLE, 255), (size, size), size)
             self._surface_cache[food_key] = food_surf
             
-            # "to home" dots (white)
+            # For "to home" (white) dots
             home_key = f'dot_home_{size}'
-            home_surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
-            pygame.draw.circle(home_surf, settings.WHITE, (size, size), size)
+            home_surf = pygame.Surface((size * 2, size * 2)).convert_alpha()  # Convert for better performance
+            home_surf.fill((0, 0, 0, 0))  # Fill with transparent black
+            pygame.draw.circle(home_surf, (*settings.WHITE, 255), (size, size), size)
             self._surface_cache[home_key] = home_surf
 
     def _get_dot_from_pool(self, position, dot_type, dot_time):
@@ -134,7 +137,7 @@ class Game:
                 ]
             )
         ]
-        self.ants = [Ant(position=self.anthills[0].position) for _ in range(1)]
+        self.ants = [Ant(position=self.anthills[0].position) for _ in range(10)]
         self.food = [Food() for _ in range(1)]
 
     def create_ant_from_anthill(self, anthill):
@@ -176,6 +179,11 @@ class Game:
         if self.update_skip_counter != 0:
             return
 
+        # Update dots
+        for dot in self.dots:
+            dot.update()
+
+        # Update ants and create new dots
         for ant in self.ants:
             try:
                 dot_type, dottime = ant.act(self)
@@ -423,19 +431,24 @@ class Game:
                 visual["size"]
             )
         
-        # Draw dots using cached surfaces
+        # Draw dots with alpha transparency
         for dot in self.dots:
-            visual = dot.visual()
-            # Pick surface based on dot type
-            surf_key = f'dot_{"food" if dot.type == "to food" else "home"}_{visual["size"]}'
-            if surf_key in self._surface_cache:
+            if dot.active:
+                visual = dot.visual()
+                dot_surface = pygame.Surface((visual["size"] * 2, visual["size"] * 2), pygame.SRCALPHA)
+                pygame.draw.circle(
+                    dot_surface,
+                    visual["color"],  # Color includes alpha from visual()
+                    (visual["size"], visual["size"]),
+                    visual["size"]
+                )
                 pos = (
                     visual["position"][0] - visual["size"],
                     visual["position"][1] - visual["size"]
                 )
-                self.screen.blit(self._surface_cache[surf_key], pos)
-        if len(self.dots) > 20000:
-            self.cut_dots_population()
+                self.screen.blit(dot_surface, pos)
+        #if len(self.dots) > 10000:
+         #   self.cut_dots_population()
         # Draw ants
         for ant in self.ants:
             visual = ant.visual()
