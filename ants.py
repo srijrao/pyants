@@ -291,12 +291,18 @@ class Ant:
                     if isinstance(item, type(environment.food[0]))
                 ]
                 if visible_food:
-                    # Found food - pick it up and set foodbool
-                    self.foodbool = True
-                    self.timeawareness = 0
+                    # Check if ant has actually reached the food
+                    distance_to_food = math.hypot(
+                        self.position[0] - visible_food[0].position[0],
+                        self.position[1] - visible_food[0].position[1]
+                    )
+                    if distance_to_food < self.collision_distance:
+                        # Actually reached food - pick it up and set foodbool
+                        self.foodbool = True
+                        self.timeawareness = 0
+                    # Either way, move towards the food
                     self.turn_towards(visible_food[0].position)
                     self.move(forward=True)
-                    return dot_type
 
             # Look for newest appropriate dot
             nearest_dot = self.find_newest_visible_dot(environment)

@@ -150,12 +150,18 @@ class Game:
 
     def quitter(self):
         self.running = False
+        
+    def cut_dots_population(self):
+        """Cuts the dot population in half"""
+        dots_to_remove = len(self.dots) // 2
+        self.dots = self.dots[dots_to_remove:]
 
     # """ Key Handling Functions"""
 
     def handle_keydown(self, event):
         actions = {
             pygame.K_q: self.quitter,
+            pygame.K_s: self.cut_dots_population,
         }
         action = actions.get(event.key)
         if action:
