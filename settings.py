@@ -14,4 +14,4 @@ dot_size = 2
 dot_time = 1000
 collision_distance = 10
 ant_speed = 1
-Anthill_size = 20
+Anthill_size = 10
