@@ -113,9 +113,12 @@ class Game:
             dot.update()
 
         for ant in self.ants:
-            dot_type, dottime = ant.act(self)
-            if dot_type:
-                self.dots.append(Dot(ant.position, dot_type,dottime))
+            try:
+                dot_type, dottime = ant.act(self)
+                if dot_type:
+                    self.dots.append(Dot(ant.position, dot_type,dottime))
+            except Exception as e:
+                print(e)
 
         self.population_control()
 

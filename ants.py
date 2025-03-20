@@ -237,23 +237,26 @@ class Ant:
         Find the newest (highest timeleft) dot in the ant's field of vision.
         Only perceives dots of appropriate type based on foodbool state.
         """
-        view_triangle = self.calculate_view_triangle()
-        visible_items = environment.get_items_in_polygon(view_triangle)
+        try:
+            view_triangle = self.calculate_view_triangle()
+            visible_items = environment.get_items_in_polygon(view_triangle)
 
-        # Only perceive dots of appropriate type
-        target_type = "to home" if self.foodbool else "to food"
-        visible_dots = [
-            item
-            for item in visible_items
-            if isinstance(item, type(environment.dots[0])) and item.type == target_type
-        ]
+            # Only perceive dots of appropriate type
+            target_type = "to home" if self.foodbool else "to food"
+            visible_dots = [
+                item
+                for item in visible_items
+                if isinstance(item, type(environment.dots[0])) and item.type == target_type
+            ]
 
-        if not visible_dots:
-            return None
+            if not visible_dots:
+                return None
 
-        # Sort by timeleft (newest first)
-        newest_dot = max(visible_dots, key=lambda dot: dot.time)
-        return newest_dot
+            # Sort by timeleft (newest first)
+            newest_dot = max(visible_dots, key=lambda dot: dot.time)
+            return newest_dot
+        except Exception:
+            pass
 
     def act(self, environment=None):
         """
