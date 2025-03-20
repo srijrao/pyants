@@ -39,5 +39,5 @@ BLACK = (10, 10, 10)
 dot_size = 2
 dot_time = 100
 collision_distance = 10
-ant_speed = 1
+ant_speed = 2
 Anthill_size = 10

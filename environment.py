@@ -213,7 +213,7 @@ class Game:
             self.draw()
             pygame.display.flip()
             
-            self.clock.tick(settings.targetfps)
+            self.clock.tick(1000000)
 
         pygame.quit()
         sys.exit()
@@ -232,11 +232,102 @@ class Game:
         for dot in removed_dots:
             self._return_dot_to_pool(dot)
 
+    def reset_simulation(self):
+        """Performs a complete reset of the simulation."""
+        # Clear all entities
+        self.dots.clear()
+        self.ants.clear()
+        self.anthills.clear()
+        self.food.clear()
+        self._dot_pool.clear()
+        
+        # Start fresh
+        self.create_population()
+
+    def check_position_overlap(self, position, size):
+        """Check if a position would overlap with existing anthills or food sources."""
+        # Check overlap with anthills
+        for anthill in self.anthills:
+            dx = position[0] - anthill.position[0]
+            dy = position[1] - anthill.position[1]
+            min_distance = size + settings.Anthill_size
+            if (dx * dx + dy * dy) < (min_distance * min_distance):
+                return True
+
+        # Check overlap with food sources
+        for food in self.food:
+            dx = position[0] - food.position[0]
+            dy = position[1] - food.position[1]
+            min_distance = size + food.size
+            if (dx * dx + dy * dy) < (min_distance * min_distance):
+                return True
+        
+        return False
+
+    def get_valid_position(self, size):
+        """Get a random position that doesn't overlap with existing objects."""
+        barrier = size * 2
+        max_attempts = 100  # Prevent infinite loop
+        
+        for _ in range(max_attempts):
+            position = [
+                random.randint(barrier, self.width - barrier),
+                random.randint(barrier, self.height - barrier)
+            ]
+            if not self.check_position_overlap(position, size):
+                return position
+                
+        # If no valid position found after max attempts, find position with maximum separation
+        best_position = None
+        max_min_distance = 0
+        
+        for attempt in range(20):  # Try 20 positions
+            position = [
+                random.randint(barrier, self.width - barrier),
+                random.randint(barrier, self.height - barrier)
+            ]
+            min_distance = float('inf')
+            
+            # Check distance to all objects
+            for anthill in self.anthills:
+                dx = position[0] - anthill.position[0]
+                dy = position[1] - anthill.position[1]
+                distance = (dx * dx + dy * dy) ** 0.5
+                min_distance = min(min_distance, distance)
+            
+            for food in self.food:
+                dx = position[0] - food.position[0]
+                dy = position[1] - food.position[1]
+                distance = (dx * dx + dy * dy) ** 0.5
+                min_distance = min(min_distance, distance)
+            
+            if min_distance > max_min_distance:
+                max_min_distance = min_distance
+                best_position = position
+        
+        return best_position
+
+    def add_new_anthill(self):
+        """Creates a new anthill at a random non-overlapping position."""
+        position = self.get_valid_position(settings.Anthill_size)
+        new_anthill = Anthill(position=position)
+        self.anthills.append(new_anthill)
+        self.create_ant_from_anthill(new_anthill)
+
+    def add_new_food(self):
+        """Creates a new food source at a random non-overlapping position."""
+        food_size = settings.Anthill_size * 2  # Food size is 2x anthill size
+        position = self.get_valid_position(food_size)
+        self.food.append(Food(position=position))
+
     def handle_keydown(self, event):
         """Handle keyboard press events."""
         actions = {
             pygame.K_q: self.quitter,
             pygame.K_s: self.cut_dots_population,
+            pygame.K_a: self.add_new_anthill,  # 'a' key for new anthill
+            pygame.K_f: self.add_new_food,     # 'f' key for new food source
+            pygame.K_r: self.reset_simulation,  # 'r' key for reset
         }
         action = actions.get(event.key)
         if action:
