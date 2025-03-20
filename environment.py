@@ -90,14 +90,14 @@ class Game:
         """
         try:
             if self.frame_count == 0:
-                if self.actual_fps > (self.targetfps // 10):
+                if self.actual_fps > (self.targetfps // 3):
                     self.create_ant_from_anthill(self.anthills[0])
-                if self.actual_fps < (self.targetfps // 10):
-                    for _ in range(len(self.dots)//3):
+                if self.actual_fps < (self.targetfps // 3):
+                    for _ in range(len(self.dots)//10):
                         self.dots.pop()
-                    for _ in range(1):
+                        '''for _ in range(1):
                         if self.ants[0].foodbool is False:
-                            self.ants[0].alive = False
+                            self.ants[0].alive = False'''
 
         except Exception as e:
             print(e)
@@ -109,9 +109,6 @@ class Game:
         random.shuffle(self.dots)
 
     def update_simulation(self):
-        for dot in self.dots:
-            dot.update()
-
         for ant in self.ants:
             try:
                 dot_type, dottime = ant.act(self)
