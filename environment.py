@@ -169,7 +169,8 @@ class Game:
             else:
                 self._return_dot_to_pool(dot)
         self.dots = active_dots
-        
+        if len(self.ants)<=1:
+            self.ants = [Ant(position=self.anthills[0].position) for _ in range(10)]
         self.ants = [ant for ant in self.ants if ant.alive]
 
     def update_simulation(self):

@@ -25,8 +25,8 @@ Simulation Parameters:
     - ant_speed: Movement speed of ants
     - Anthill_size: Size of anthill in pixels
 """
-width = 1000
-height = 1000
+width = 1200
+height = 800
 area = width*height
 targetfps = 60
 name = "Pyants"
