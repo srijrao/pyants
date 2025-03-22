@@ -20,12 +20,14 @@ from food import Food
 WHITE = settings.WHITE
 BROWN = settings.BROWN
 
+
 class Game:
     """Main game class that manages the ant colony simulation."""
-    
-    def __init__(self, debug=False):
+
+    def __init__(self, debug=False, seedots=False):
         pygame.init()
         self.debug = debug
+        self.seedots = seedots
         self.width = settings.width
         self.height = settings.height
         self.targetfps = settings.targetfps
@@ -36,7 +38,8 @@ class Game:
         self.lastframetime = None
         self.info_lines = []
         self.actual_fps = 1
-        
+        self.popmin = settings.popmin
+
         # Object pooling for dots
         self._dot_pool = []
         self.dots = []
@@ -45,27 +48,27 @@ class Game:
         self.food = []
         self.onscreen = []
         self.paused = False
-        
+
         # Spatial partitioning (grid-based)
         self.cell_size = 50  # Adjust based on average entity size
         self.grid = defaultdict(list)
-        
+
         # Pre-rendered surfaces cache
         self._surface_cache = {}
-        
+
         # Performance optimization flags
         self.update_skip_counter = 0
         self.UPDATE_SKIP_FRAMES = 2  # Update every N frames
-        
+
         self.create_population()
-        
+
         # Render Screen
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption(settings.name)
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 16)
         self.running = True
-        
+
         # Initialize cached surfaces
         self._init_surface_cache()
 
@@ -74,22 +77,35 @@ class Game:
         # Cache anthill surface
         anthill_size = settings.Anthill_size * 2
         anthill_surf = pygame.Surface((anthill_size, anthill_size), pygame.SRCALPHA)
-        pygame.draw.circle(anthill_surf, (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255)), (settings.Anthill_size, settings.Anthill_size), settings.Anthill_size)
-        self._surface_cache['anthill'] = anthill_surf
-        
+        pygame.draw.circle(
+            anthill_surf,
+            (
+                random.randint(100, 255),
+                random.randint(100, 255),
+                random.randint(100, 255),
+            ),
+            (settings.Anthill_size, settings.Anthill_size),
+            settings.Anthill_size,
+        )
+        self._surface_cache["anthill"] = anthill_surf
+
         # Cache dot surfaces for both colors
         for size in range(1, settings.dot_size + 1):
             # "to food" dots (purple)
             # For "to food" (purple) dots
-            food_key = f'dot_food_{size}'
-            food_surf = pygame.Surface((size * 2, size * 2)).convert_alpha()  # Convert for better performance
+            food_key = f"dot_food_{size}"
+            food_surf = pygame.Surface(
+                (size * 2, size * 2)
+            ).convert_alpha()  # Convert for better performance
             food_surf.fill((0, 0, 0, 0))  # Fill with transparent black
             pygame.draw.circle(food_surf, (*settings.PURPLE, 255), (size, size), size)
             self._surface_cache[food_key] = food_surf
-            
+
             # For "to home" (white) dots
-            home_key = f'dot_home_{size}'
-            home_surf = pygame.Surface((size * 2, size * 2)).convert_alpha()  # Convert for better performance
+            home_key = f"dot_home_{size}"
+            home_surf = pygame.Surface(
+                (size * 2, size * 2)
+            ).convert_alpha()  # Convert for better performance
             home_surf.fill((0, 0, 0, 0))  # Fill with transparent black
             pygame.draw.circle(home_surf, (*settings.WHITE, 255), (size, size), size)
             self._surface_cache[home_key] = home_surf
@@ -112,7 +128,7 @@ class Game:
         """Update spatial partitioning grid."""
         self.grid.clear()
         for item in self.onscreen:
-            if hasattr(item, 'position'):
+            if hasattr(item, "position"):
                 cell_x = int(item.position[0] // self.cell_size)
                 cell_y = int(item.position[1] // self.cell_size)
                 self.grid[(cell_x, cell_y)].append(item)
@@ -137,7 +153,9 @@ class Game:
                 ]
             )
         ]
-        self.ants = [Ant(position=self.anthills[0].position) for _ in range(10)]
+        self.ants = [
+            Ant(position=self.anthills[0].position) for _ in range(self.popmin)
+        ]
         self.food = [Food() for _ in range(1)]
 
     def create_ant_from_anthill(self, anthill):
@@ -169,14 +187,18 @@ class Game:
             else:
                 self._return_dot_to_pool(dot)
         self.dots = active_dots
-        if len(self.ants)<=1:
-            self.ants = [Ant(position=self.anthills[0].position) for _ in range(10)]
+        if len(self.ants) <= 1:
+            self.ants = [
+                Ant(position=self.anthills[0].position) for _ in range(self.popmin)
+            ]
         self.ants = [ant for ant in self.ants if ant.alive]
 
     def update_simulation(self):
         """Update the state of all simulation entities."""
         # Skip updates based on performance needs
-        self.update_skip_counter = (self.update_skip_counter + 1) % self.UPDATE_SKIP_FRAMES
+        self.update_skip_counter = (
+            self.update_skip_counter + 1
+        ) % self.UPDATE_SKIP_FRAMES
         if self.update_skip_counter != 0:
             return
 
@@ -203,7 +225,7 @@ class Game:
             self.timepiece()
             if self.frame_count >= self.actual_fps:
                 self.frame_count = 0
-            
+
             # Handle events
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -212,7 +234,7 @@ class Game:
                     self.handle_keydown(event)
                 elif event.type == pygame.KEYUP:
                     self.handle_keyup(event)
-                    
+
             # Update simulation state
             if not self.paused:
                 self.update_simulation()
@@ -221,7 +243,7 @@ class Game:
             self.screen.fill(BROWN)
             self.draw()
             pygame.display.flip()
-            
+
             self.clock.tick(1000000)
 
         pygame.quit()
@@ -230,7 +252,7 @@ class Game:
     def quitter(self):
         """Stop the simulation."""
         self.running = False
-        
+
     def cut_dots_population(self):
         """Reduce the number of pheromone dots by half."""
         random.shuffle(self.dots)
@@ -241,6 +263,11 @@ class Game:
         for dot in removed_dots:
             self._return_dot_to_pool(dot)
 
+    def cut_ant_population(self):
+        """eliminate one ant"""
+        random.shuffle(self.ants)
+        self.ants[0].alive = False
+
     def reset_simulation(self):
         """Performs a complete reset of the simulation."""
         # Clear all entities
@@ -249,7 +276,7 @@ class Game:
         self.anthills.clear()
         self.food.clear()
         self._dot_pool.clear()
-        
+
         # Start fresh
         self.create_population()
 
@@ -270,50 +297,50 @@ class Game:
             min_distance = size + food.size
             if (dx * dx + dy * dy) < (min_distance * min_distance):
                 return True
-        
+
         return False
 
     def get_valid_position(self, size):
         """Get a random position that doesn't overlap with existing objects."""
         barrier = size * 2
         max_attempts = 100  # Prevent infinite loop
-        
+
         for _ in range(max_attempts):
             position = [
                 random.randint(barrier, self.width - barrier),
-                random.randint(barrier, self.height - barrier)
+                random.randint(barrier, self.height - barrier),
             ]
             if not self.check_position_overlap(position, size):
                 return position
-                
+
         # If no valid position found after max attempts, find position with maximum separation
         best_position = None
         max_min_distance = 0
-        
+
         for attempt in range(20):  # Try 20 positions
             position = [
                 random.randint(barrier, self.width - barrier),
-                random.randint(barrier, self.height - barrier)
+                random.randint(barrier, self.height - barrier),
             ]
-            min_distance = float('inf')
-            
+            min_distance = float("inf")
+
             # Check distance to all objects
             for anthill in self.anthills:
                 dx = position[0] - anthill.position[0]
                 dy = position[1] - anthill.position[1]
                 distance = (dx * dx + dy * dy) ** 0.5
                 min_distance = min(min_distance, distance)
-            
+
             for food in self.food:
                 dx = position[0] - food.position[0]
                 dy = position[1] - food.position[1]
                 distance = (dx * dx + dy * dy) ** 0.5
                 min_distance = min(min_distance, distance)
-            
+
             if min_distance > max_min_distance:
                 max_min_distance = min_distance
                 best_position = position
-        
+
         return best_position
 
     def add_new_anthill(self):
@@ -335,8 +362,9 @@ class Game:
             pygame.K_q: self.quitter,
             pygame.K_s: self.cut_dots_population,
             pygame.K_a: self.add_new_anthill,  # 'a' key for new anthill
-            pygame.K_f: self.add_new_food,     # 'f' key for new food source
+            pygame.K_f: self.add_new_food,  # 'f' key for new food source
             pygame.K_r: self.reset_simulation,  # 'r' key for reset
+            pygame.K_k: self.cut_ant_population,
         }
         action = actions.get(event.key)
         if action:
@@ -367,13 +395,13 @@ class Game:
         max_x = max(p[0] for p in polygon)
         min_y = min(p[1] for p in polygon)
         max_y = max(p[1] for p in polygon)
-        
+
         # Get relevant grid cells
         start_cell_x = int(min_x // self.cell_size)
         start_cell_y = int(min_y // self.cell_size)
         end_cell_x = int(max_x // self.cell_size)
         end_cell_y = int(max_y // self.cell_size)
-        
+
         # Create collision mask once
         width = int(max_x - min_x + 1)
         height = int(max_y - min_y + 1)
@@ -381,16 +409,16 @@ class Game:
         adjusted_polygon = [(x - min_x, y - min_y) for x, y in polygon]
         pygame.draw.polygon(mask_surface, (255, 255, 255), adjusted_polygon)
         mask = pygame.mask.from_surface(mask_surface)
-        
+
         items_in_polygon = []
         # Check only items in relevant grid cells
         for cell_x in range(start_cell_x, end_cell_x + 1):
             for cell_y in range(start_cell_y, end_cell_y + 1):
                 for item in self.grid.get((cell_x, cell_y), []):
-                    pos = getattr(item, 'position', None)
-                    if pos is None and hasattr(item, 'visual'):
-                        pos = item.visual()['position']
-                    
+                    pos = getattr(item, "position", None)
+                    if pos is None and hasattr(item, "visual"):
+                        pos = item.visual()["position"]
+
                     if pos:
                         # Quick bounding box check
                         if min_x <= pos[0] <= max_x and min_y <= pos[1] <= max_y:
@@ -400,57 +428,56 @@ class Game:
                             if 0 <= rel_x < width and 0 <= rel_y < height:
                                 if mask.get_at((rel_x, rel_y)):
                                     items_in_polygon.append(item)
-        
+
         return items_in_polygon
 
     def draw(self):
         """Optimized rendering with cached surfaces."""
         # Update visible entities list and spatial grid
         self.onscreen = (
-            self.anthills +
-            [dot for dot in self.dots if dot.active] +
-            [ant for ant in self.ants if ant.alive] +
-            self.food
+            self.anthills
+            + [dot for dot in self.dots if dot.active]
+            + [ant for ant in self.ants if ant.alive]
+            + self.food
         )
         self._update_spatial_grid()
-        
+
         # Draw using cached surfaces where possible
         for anthill in self.anthills:
             visual = anthill.visual()
             pos = (
                 visual["position"][0] - settings.Anthill_size,
-                visual["position"][1] - settings.Anthill_size
+                visual["position"][1] - settings.Anthill_size,
             )
-            self.screen.blit(self._surface_cache['anthill'], pos)
-        
+            self.screen.blit(self._surface_cache["anthill"], pos)
+
         for food in self.food:
             visual = food.visual()
             pygame.draw.circle(
-                self.screen,
-                visual["color"],
-                visual["position"],
-                visual["size"]
+                self.screen, visual["color"], visual["position"], visual["size"]
             )
-        
-        # Draw dots with alpha transparency
-        for dot in self.dots:
-            if dot.active:
-                visual = dot.visual()
-                dot_surface = pygame.Surface((visual["size"] * 2, visual["size"] * 2), pygame.SRCALPHA)
-                pygame.draw.circle(
-                    dot_surface,
-                    visual["color"],  # Color includes alpha from visual()
-                    (visual["size"], visual["size"]),
-                    visual["size"]
-                )
-                pos = (
-                    visual["position"][0] - visual["size"],
-                    visual["position"][1] - visual["size"]
-                )
-                self.screen.blit(dot_surface, pos)
-        #if len(self.dots) > 10000:
-         #   self.cut_dots_population()
-        # Draw ants
+        if self.seedots is True:
+            # Draw dots with alpha transparency
+            for dot in self.dots:
+                if dot.active:
+                    visual = dot.visual()
+                    dot_surface = pygame.Surface(
+                        (visual["size"] * 2, visual["size"] * 2), pygame.SRCALPHA
+                    )
+                    pygame.draw.circle(
+                        dot_surface,
+                        visual["color"],  # Color includes alpha from visual()
+                        (visual["size"], visual["size"]),
+                        visual["size"],
+                    )
+                    pos = (
+                        visual["position"][0] - visual["size"],
+                        visual["position"][1] - visual["size"],
+                    )
+                    self.screen.blit(dot_surface, pos)
+            # if len(self.dots) > 10000:
+            #   self.cut_dots_population()
+            # Draw ants
         for ant in self.ants:
             visual = ant.visual()
             pygame.draw.polygon(self.screen, visual["color"], visual["points"])
@@ -466,6 +493,7 @@ class Game:
                 self.screen.blit(text_surface, (10, y_offset))
             y_offset += 18
 
+
 if __name__ == "__main__":
-    game = Game()
+    game = Game(debug=True)
     game.run()
