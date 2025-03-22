@@ -38,12 +38,14 @@ class Ant:
         self.barrier_distance = self.collision_distance * 2
         self.rotation_speed = 10
         self.movement_speed = settings.ant_speed
-        self.foodbool = False
+        self.foodbool = None
         self.homebool = False
         self.timeawareness = 0
+        self.timeleft = settings.dot_time
         self.dropbool = True
         # Cache for visual packet
         self.visual_packet = None
+        
 
     def calculate_draw_points(self):
         """
@@ -82,11 +84,11 @@ class Ant:
             }
         return self.visual_packet
 
-    def distance_to(self, target_position):
+    def distance_to(self, target_position, starting_position=None):
         """
         Calculate Euclidean distance to a target position.
         """
-        position = self.position
+        position = self.position if starting_position is None else starting_position
         dx = position[0] - target_position[0]
         dy = position[1] - target_position[1]
         return math.hypot(dx, dy)
@@ -129,14 +131,24 @@ class Ant:
         Simulate a random shake or shiver by adjusting position randomly.
         """
         position = self.position
-        jitter = 1
+        jitter = random.randint(1,3)
+        self.movement_speed = random.randint(1,5)
+
         deltas = [
             random.uniform(-jitter, jitter),
             random.uniform(-jitter, jitter),
         ]
         self.position = [position[0] + deltas[0], position[1] + deltas[1]]
+        if random.random()>0.5:
+            self.angle+=jitter
+        else:
+            self.angle-=jitter
         # Invalidate visual cache
         self.visual_packet = None
+    def lifespan(self):
+        self.timeleft -= 1
+        if self.timeleft <= 0:
+            self.alive = False
 
     def move(self, forward=True):
         """
@@ -221,7 +233,7 @@ class Ant:
         self.rotate(clockwise=random.choice([True, False]))
         self.move(forward=True)
 
-    def calculate_view_triangle(self, vision_distance=None, fieldofvision=90):
+    def calculate_view_triangle(self, vision_distance=None, fieldofvision=170):
         """
         Calculate the vertices of the view triangle representing the ant's field of vision.
         Args:
@@ -287,20 +299,17 @@ class Ant:
         """
         Act based on environment and time.
         """
-        dot_type = None
-        self.dropbool = not self.dropbool
-        
+        self.shake_shiver()
+        self.lifespan()
+        dot_type = None        
         # Check if ant is at anthill with food
         if self.foodbool:
-            distance_to_anthill = math.hypot(
-                self.position[0] - self.anthill_position[0],
-                self.position[1] - self.anthill_position[1]
-            )
+            distance_to_anthill = self.distance_to(self.anthill_position)
             if distance_to_anthill < self.collision_distance:
                 self.alive = False
                 return (None, self.timeawareness)
 
-        if self.dropbool is True:
+        if random.random()>0.5:
             dot_type = self.drop_dot()
         self.timeawareness += 0.001
 
@@ -316,13 +325,11 @@ class Ant:
                 ]
                 if visible_food:
                     # Check if ant has actually reached the food
-                    distance_to_food = math.hypot(
-                        self.position[0] - visible_food[0].position[0],
-                        self.position[1] - visible_food[0].position[1]
-                    )
+                    distance_to_food = self.distance_to(visible_food[0].position)
                     if distance_to_food < self.collision_distance:
                         # Actually reached food - pick it up and set foodbool
                         self.foodbool = True
+                        self.timeleft = settings.dot_time
                         self.timeawareness = 0
                     # Either way, move towards the food
                     self.turn_towards(visible_food[0].position)
@@ -332,6 +339,7 @@ class Ant:
             nearest_dot = self.find_newest_visible_dot(environment)
             if nearest_dot:
                 # Follow the newest dot of appropriate type
+                self.timeleft +=1
                 newest_dot = nearest_dot
                 self.turn_towards(newest_dot.position)
                 self.move(forward=True)
