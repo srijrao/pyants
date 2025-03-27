@@ -126,37 +126,46 @@ class Game:
         if len(self._dot_pool) < 1000:  # Limit pool size
             self._dot_pool.append(dot)
 
-    def constantdotoptimization(self):
-        """Constantly optimize the number of dots using spatial partitioning."""
+    def constantconsolidation(self):
+        """Optimize the number of dots by consolidating dots in the most populated cell."""
         if len(self.dots) < 200:
             return
 
-        # Shuffle the dots to ensure randomness
-        random.shuffle(self.dots)
-
-        # Update the spatial grid
+        # Ensure the spatial grid is updated
         self._update_spatial_grid()
+
+        # create toggler for switching between most populated cell and random cell
+        try:
+            self.toggler = not self.toggler
+        except AttributeError:
+            self.toggler = True
+
+        if self.toggler:
+            # Get the most populated cell
+            if not self.most_populated_cell:
+                return  # No populated cell to process
+            cell_dots = self.grid.get(self.most_populated_cell, [])
+        else:
+            # Get a random cell
+            cell_dots = self.grid.get(random.randint(0, len(self.grid)), [])
+
+        if len(cell_dots) < 2:
+            return  # Not enough dots in the cell to consolidate
 
         # Track dots to remove
         dots_to_remove = set()
 
-        # Iterate through the dots
-        for dot in self.dots[:]:  # Use a copy of the list to avoid modification issues
+        # Consolidate dots in the most populated cell
+        for dot in cell_dots[:]:  # Use a copy of the list to avoid modification issues
             if not isinstance(dot, Dot):  # Ensure only Dot objects are processed
                 continue
             if dot in dots_to_remove:
                 continue
 
-            # Determine the grid cell of the current dot
-            cell_x = int(dot.position[0] // self.cell_size)
-            cell_y = int(dot.position[1] // self.cell_size)
-
-            # Get dots in the same grid cell
-            cell_dots = self.grid.get((cell_x, cell_y), [])
-
-            # Compare with other dots in the same cell
             for other_dot in cell_dots:
-                if not isinstance(other_dot, Dot):  # Ensure only Dot objects are processed
+                if not isinstance(
+                    other_dot, Dot
+                ):  # Ensure only Dot objects are processed
                     continue
                 if dot == other_dot or other_dot in dots_to_remove:
                     continue
@@ -235,13 +244,22 @@ class Game:
         self.dots = consolidated_dots
 
     def _update_spatial_grid(self):
-        """Update spatial partitioning grid."""
+        """Update spatial partitioning grid and track the most populated cell."""
         self.grid.clear()
+        self.most_populated_cell = None
+        max_population = 0
+
         for item in self.onscreen:
             if hasattr(item, "position"):
                 cell_x = int(item.position[0] // self.cell_size)
                 cell_y = int(item.position[1] // self.cell_size)
-                self.grid[(cell_x, cell_y)].append(item)
+                cell = (cell_x, cell_y)
+                self.grid[cell].append(item)
+
+                # Track the most populated cell
+                if len(self.grid[cell]) > max_population:
+                    max_population = len(self.grid[cell])
+                    self.most_populated_cell = cell
 
     def timepiece(self):
         """Updates the elapsed time for the environment."""
@@ -317,7 +335,7 @@ class Game:
             dot.update()
 
         try:
-            self.constantdotoptimization()
+            self.constantconsolidation()
         except Exception as e:
             if self.debug:
                 print(e)
