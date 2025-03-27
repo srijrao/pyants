@@ -43,6 +43,7 @@ class Ant:
         self.timeawareness = 0
         self.timeleft = settings.dot_time
         self.dropbool = True
+        self.likelylookbehind = settings.lookbehind
         # Cache for visual packet
         self.visual_packet = None
         
@@ -299,6 +300,7 @@ class Ant:
         """
         Act based on environment and time.
         """
+        now = random.random()
         self.shake_shiver()
         self.lifespan()
         dot_type = None        
@@ -309,8 +311,11 @@ class Ant:
                 self.alive = False
                 return (None, self.timeawareness)
 
-        if random.random()>0.5:
+        if now>0.5:
             dot_type = self.drop_dot()
+            if now > self.likelylookbehind:
+                self.angle += 180
+
         self.timeawareness += 0.001
 
         if environment:
