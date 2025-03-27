@@ -117,6 +117,8 @@ class Game:
             dot.reset(position, dot_type, dot_time)
         else:
             dot = Dot(position, dot_type, dot_time)
+        if not isinstance(dot, Dot):
+            raise TypeError("Only Dot objects can be returned from the pool.")
         return dot
 
     def _return_dot_to_pool(self, dot):
@@ -124,7 +126,71 @@ class Game:
         if len(self._dot_pool) < 1000:  # Limit pool size
             self._dot_pool.append(dot)
 
-    def consolidate_dots(self):
+    def constantdotoptimization(self):
+        """Constantly optimize the number of dots using spatial partitioning."""
+        if len(self.dots) < 200:
+            return
+
+        # Shuffle the dots to ensure randomness
+        random.shuffle(self.dots)
+
+        # Update the spatial grid
+        self._update_spatial_grid()
+
+        # Track dots to remove
+        dots_to_remove = set()
+
+        # Iterate through the dots
+        for dot in self.dots[:]:  # Use a copy of the list to avoid modification issues
+            if not isinstance(dot, Dot):  # Ensure only Dot objects are processed
+                continue
+            if dot in dots_to_remove:
+                continue
+
+            # Determine the grid cell of the current dot
+            cell_x = int(dot.position[0] // self.cell_size)
+            cell_y = int(dot.position[1] // self.cell_size)
+
+            # Get dots in the same grid cell
+            cell_dots = self.grid.get((cell_x, cell_y), [])
+
+            # Compare with other dots in the same cell
+            for other_dot in cell_dots:
+                if not isinstance(other_dot, Dot):  # Ensure only Dot objects are processed
+                    continue
+                if dot == other_dot or other_dot in dots_to_remove:
+                    continue
+
+                # Calculate distance
+                dx = dot.position[0] - other_dot.position[0]
+                dy = dot.position[1] - other_dot.position[1]
+                distance = (dx * dx + dy * dy) ** 0.5
+
+                if distance < settings.collision_distance / 4:
+                    # Consolidate the two dots
+                    new_dot = self.consolidate_two_dots(dot, other_dot)
+                    self.dots.append(new_dot)
+                    dots_to_remove.add(dot)
+                    dots_to_remove.add(other_dot)
+                    break  # Exit inner loop to avoid further processing of `dot`
+
+        # Remove the marked dots
+        self.dots = [dot for dot in self.dots if dot not in dots_to_remove]
+
+    def consolidate_two_dots(self, dot, other_dot):
+        """Consolidate two dots into one."""
+        if not isinstance(dot, Dot) or not isinstance(other_dot, Dot):
+            raise TypeError("Only Dot objects can be consolidated.")
+        new_position = [
+            (dot.position[0] + other_dot.position[0]) / 2,
+            (dot.position[1] + other_dot.position[1]) / 2,
+        ]
+        new_timeleft = (dot.timeleft + other_dot.timeleft) // 2
+        new_dot = self._get_dot_from_pool(new_position, dot.type, dot.time)
+        new_dot.timeleft = new_timeleft
+        return new_dot
+
+    def dot_consolidate_handler(self):
         """Consolidate nearby dots to reduce the total number of dots."""
         if len(self.dots) < 200:
             return  # Not enough dots to consolidate
@@ -157,14 +223,7 @@ class Game:
             if (
                 closest_dot and closest_distance < self.cell_size
             ):  # Threshold for consolidation
-                new_position = [
-                    (dot.position[0] + closest_dot.position[0]) / 2,
-                    (dot.position[1] + closest_dot.position[1]) / 2,
-                ]
-                new_timeleft = (dot.timeleft + closest_dot.timeleft) // 2
-                new_dot = self._get_dot_from_pool(new_position, dot.type, dot.time)
-                new_dot.timeleft = new_timeleft
-
+                new_dot = self.consolidate_two_dots(dot, closest_dot)
                 consolidated_dots.append(new_dot)
                 visited.add(dot)
                 visited.add(closest_dot)
@@ -256,13 +315,13 @@ class Game:
         # Update dots
         for dot in self.dots:
             dot.update()
+
         try:
-            # Consolidate dots periodically
-            if self.frame_count == 1:  # Once per second
-                self.consolidate_dots()
+            self.constantdotoptimization()
         except Exception as e:
             if self.debug:
                 print(e)
+
         # Update ants and create new dots
         for ant in self.ants:
             try:
