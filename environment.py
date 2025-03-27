@@ -24,10 +24,10 @@ BROWN = settings.BROWN
 class Game:
     """Main game class that manages the ant colony simulation."""
 
-    def __init__(self, debug=False, seedots=False):
+    def __init__(self, debug=False, see_dots=False):
         pygame.init()
         self.debug = debug
-        self.seedots = seedots
+        self.see_dots = see_dots
         self.width = settings.width
         self.height = settings.height
         self.targetfps = settings.targetfps
@@ -124,6 +124,57 @@ class Game:
         if len(self._dot_pool) < 1000:  # Limit pool size
             self._dot_pool.append(dot)
 
+    def consolidate_dots(self):
+        """Consolidate nearby dots to reduce the total number of dots."""
+        if len(self.dots) < 200:
+            return  # Not enough dots to consolidate
+
+        # Use spatial partitioning to group dots into nearby pairs
+        consolidated_dots = []
+        visited = set()
+
+        for dot in self.dots:
+            if dot in visited or not dot.active:
+                continue
+
+            # Find the closest dot
+            closest_dot = None
+            closest_distance = float("inf")
+            for other_dot in self.dots:
+                if other_dot in visited or not other_dot.active or other_dot == dot:
+                    continue
+
+                # Calculate distance
+                dx = dot.position[0] - other_dot.position[0]
+                dy = dot.position[1] - other_dot.position[1]
+                distance = (dx * dx + dy * dy) ** 0.5
+
+                if distance < closest_distance:
+                    closest_distance = distance
+                    closest_dot = other_dot
+
+            # If a close dot is found, consolidate them
+            if (
+                closest_dot and closest_distance < self.cell_size
+            ):  # Threshold for consolidation
+                new_position = [
+                    (dot.position[0] + closest_dot.position[0]) / 2,
+                    (dot.position[1] + closest_dot.position[1]) / 2,
+                ]
+                new_timeleft = (dot.timeleft + closest_dot.timeleft) // 2
+                new_dot = self._get_dot_from_pool(new_position, dot.type, dot.time)
+                new_dot.timeleft = new_timeleft
+
+                consolidated_dots.append(new_dot)
+                visited.add(dot)
+                visited.add(closest_dot)
+            else:
+                # Keep the dot as is if no close pair is found
+                consolidated_dots.append(dot)
+
+        # Replace the current dots with the consolidated list
+        self.dots = consolidated_dots
+
     def _update_spatial_grid(self):
         """Update spatial partitioning grid."""
         self.grid.clear()
@@ -205,7 +256,13 @@ class Game:
         # Update dots
         for dot in self.dots:
             dot.update()
-
+        try:
+            # Consolidate dots periodically
+            if self.frame_count == 1:  # Once per second
+                self.consolidate_dots()
+        except Exception as e:
+            if self.debug:
+                print(e)
         # Update ants and create new dots
         for ant in self.ants:
             try:
@@ -365,6 +422,14 @@ class Game:
             pygame.K_f: self.add_new_food,  # 'f' key for new food source
             pygame.K_r: self.reset_simulation,  # 'r' key for reset
             pygame.K_k: self.cut_ant_population,
+            pygame.K_p: lambda: setattr(self, "paused", not self.paused),
+            pygame.K_d: lambda: setattr(self, "debug", not self.debug),
+            pygame.K_SPACE: lambda: self.create_ant_from_anthill(self.anthills[0]),
+            pygame.K_c: lambda: setattr(self, "see_dots", not self.see_dots),
+            # add ant to self.ants
+            pygame.K_UP: lambda: self.ants.append(
+                Ant(position=self.anthills[0].position)
+            ),
         }
         action = actions.get(event.key)
         if action:
@@ -456,7 +521,7 @@ class Game:
             pygame.draw.circle(
                 self.screen, visual["color"], visual["position"], visual["size"]
             )
-        if self.seedots is True:
+        if self.see_dots is True:
             # Draw dots with alpha transparency
             for dot in self.dots:
                 if dot.active:
