@@ -286,9 +286,9 @@ class Game:
         ]
         self.food = [Food() for _ in range(1)]
 
-    def create_ant_from_anthill(self, anthill):
+    def create_ant_from_anthill(self, anthill,create:int=2):
         """Creates new ants at a specified anthill's position."""
-        for _ in range(2):
+        for _ in range(random.randint(1, create)):
             self.ants.append(Ant(position=anthill.position))
 
     def population_control(self):
@@ -316,9 +316,7 @@ class Game:
                 self._return_dot_to_pool(dot)
         self.dots = active_dots
         if len(self.ants) <= 1:
-            self.ants = [
-                Ant(position=self.anthills[0].position) for _ in range(self.popmin)
-            ]
+            self.create_ant_from_anthill(self.anthills[0],create=self.popmin)
         self.ants = [ant for ant in self.ants if ant.alive]
 
     def update_simulation(self):
