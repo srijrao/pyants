@@ -2,6 +2,7 @@ import settings
 import math
 import random
 
+
 class Ant:
     """
     Represents an ant in the simulation.
@@ -9,6 +10,7 @@ class Ant:
     Each ant has a position, an anthill position, and various attributes
     that define its behavior.
     """
+
     def __init__(self, position=[settings.width / 2, settings.height / 2]):
         """
         Initializes an Ant object.
@@ -46,7 +48,6 @@ class Ant:
         self.likelylookbehind = settings.lookbehind
         # Cache for visual packet
         self.visual_packet = None
-        
 
     def calculate_draw_points(self):
         """
@@ -132,20 +133,21 @@ class Ant:
         Simulate a random shake or shiver by adjusting position randomly.
         """
         position = self.position
-        jitter = random.randint(1,3)
-        self.movement_speed = random.randint(1,5)
+        jitter = random.randint(1, 3)
+        self.movement_speed = random.randint(1, 5)
 
         deltas = [
             random.uniform(-jitter, jitter),
             random.uniform(-jitter, jitter),
         ]
         self.position = [position[0] + deltas[0], position[1] + deltas[1]]
-        if random.random()>0.5:
-            self.angle+=jitter
+        if random.random() > 0.5:
+            self.angle += jitter
         else:
-            self.angle-=jitter
+            self.angle -= jitter
         # Invalidate visual cache
         self.visual_packet = None
+
     def lifespan(self):
         self.timeleft -= 1
         if self.timeleft <= 0:
@@ -284,7 +286,8 @@ class Ant:
             visible_dots = [
                 item
                 for item in visible_items
-                if isinstance(item, type(environment.dots[0])) and item.type == target_type
+                if isinstance(item, type(environment.dots[0]))
+                and item.type == target_type
             ]
 
             if not visible_dots:
@@ -296,6 +299,14 @@ class Ant:
         except Exception:
             pass
 
+    def flip(self):
+        """
+        Flip the ant by 180 degrees.
+        """
+        self.angle += 180
+        # Invalidate visual cache
+        self.visual_packet = None
+
     def act(self, environment=None):
         """
         Act based on environment and time.
@@ -303,7 +314,7 @@ class Ant:
         now = random.random()
         self.shake_shiver()
         self.lifespan()
-        dot_type = None        
+        dot_type = None
         # Check if ant is at anthill with food
         if self.foodbool:
             distance_to_anthill = self.distance_to(self.anthill_position)
@@ -311,10 +322,10 @@ class Ant:
                 self.alive = False
                 return (None, self.timeawareness)
 
-        if now>0.5:
+        if now > 0.5:
             dot_type = self.drop_dot()
             if now > self.likelylookbehind:
-                self.angle += 180
+                self.flip()
 
         self.timeawareness += 0.001
 
@@ -336,6 +347,7 @@ class Ant:
                         self.foodbool = True
                         self.timeleft = settings.dot_time
                         self.timeawareness = 0
+                        self.flip()
                     # Either way, move towards the food
                     self.turn_towards(visible_food[0].position)
                     self.move(forward=True)
@@ -344,7 +356,7 @@ class Ant:
             nearest_dot = self.find_newest_visible_dot(environment)
             if nearest_dot:
                 # Follow the newest dot of appropriate type
-                self.timeleft +=1
+                self.timeleft += 1
                 newest_dot = nearest_dot
                 self.turn_towards(newest_dot.position)
                 self.move(forward=True)
