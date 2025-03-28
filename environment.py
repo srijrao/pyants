@@ -24,10 +24,10 @@ BROWN = settings.BROWN
 class Game:
     """Main game class that manages the ant colony simulation."""
 
-    def __init__(self, debug=False, see_dots=False):
+    def __init__(self, debug=False):
         pygame.init()
         self.debug = debug
-        self.see_dots = see_dots
+        self.see_dots = debug
         self.width = settings.width
         self.height = settings.height
         self.targetfps = settings.targetfps
@@ -131,8 +131,8 @@ class Game:
         # Ensure the spatial grid is updated
         self._update_spatial_grid()
         if random.random() < 0.005:
-                self.cut_dots_population()
-        return
+            self.cut_dots_population()
+            return
         if random.random() < 0.5:
             # Get the most populated cell
             if not self.most_populated_cell:
@@ -333,7 +333,6 @@ class Game:
         except Exception as e:
             if self.debug:
                 print(e)
-
         # Update ants and create new dots
         for ant in self.ants:
             try:
