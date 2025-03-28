@@ -50,7 +50,7 @@ class Game:
         self.paused = False
 
         # Spatial partitioning (grid-based)
-        self.cell_size = 50  # Adjust based on average entity size
+        self.cell_size = ((settings.width+settings.height)//2) // 100
         self.grid = defaultdict(list)
 
         # Pre-rendered surfaces cache
@@ -130,14 +130,16 @@ class Game:
         """Optimize the number of dots by consolidating dots in the most populated cell."""
         # Ensure the spatial grid is updated
         self._update_spatial_grid()
-
+        if random.random() < 0.005:
+                self.cut_dots_population()
+        return
         if random.random() < 0.5:
             # Get the most populated cell
             if not self.most_populated_cell:
                 return  # No populated cell to process
             cell_dots = self.grid.get(self.most_populated_cell, [])
         else:
-            if random.random() < 0.25:
+            if random.random() < 0.15:
                 self.cut_dots_population()
             return
 
@@ -161,9 +163,7 @@ class Game:
                     continue
                 if dot == other_dot or other_dot in dots_to_remove:
                     continue
-                if not dot.type == other_dot.type:
-                    continue
-
+                
                 # Calculate distance
                 dx = dot.position[0] - other_dot.position[0]
                 dy = dot.position[1] - other_dot.position[1]
@@ -172,9 +172,10 @@ class Game:
                 if distance < settings.collision_distance / 4:
                     # Consolidate the two dots
                     new_dot = self.consolidate_two_dots(dot, other_dot)
-                    self.dots.append(new_dot)
-                    dots_to_remove.add(dot)
-                    dots_to_remove.add(other_dot)
+                    if new_dot:
+                        self.dots.append(new_dot)
+                        dots_to_remove.add(dot)
+                        dots_to_remove.add(other_dot)
                     break  # Exit inner loop to avoid further processing of `dot`
 
         # Remove the marked dots
@@ -184,6 +185,9 @@ class Game:
         """Consolidate two dots into one."""
         if not isinstance(dot, Dot) or not isinstance(other_dot, Dot):
             raise TypeError("Only Dot objects can be consolidated.")
+        if not dot.type == other_dot.type:
+            return False  # Different types, keep the original dot
+
         new_position = [
             (dot.position[0] + other_dot.position[0]) / 2,
             (dot.position[1] + other_dot.position[1]) / 2,
@@ -380,7 +384,7 @@ class Game:
     def cut_dots_population(self):
         """Reduce the number of pheromone dots by half."""
         random.shuffle(self.dots)
-        dots_to_remove = int(len(self.dots) * settings.lookbehind)
+        dots_to_remove = int(len(self.dots) * 0.9)
         removed_dots = self.dots[dots_to_remove:]
         self.dots = self.dots[:dots_to_remove]
         # Return removed dots to pool
