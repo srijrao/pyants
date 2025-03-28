@@ -161,6 +161,8 @@ class Game:
                     continue
                 if dot == other_dot or other_dot in dots_to_remove:
                     continue
+                if not dot.type == other_dot.type:
+                    continue
 
                 # Calculate distance
                 dx = dot.position[0] - other_dot.position[0]
