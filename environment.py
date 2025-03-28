@@ -128,26 +128,18 @@ class Game:
 
     def constantconsolidation(self):
         """Optimize the number of dots by consolidating dots in the most populated cell."""
-        if len(self.dots) < 200:
-            return
-
         # Ensure the spatial grid is updated
         self._update_spatial_grid()
 
-        # create toggler for switching between most populated cell and random cell
-        try:
-            self.toggler = not self.toggler
-        except AttributeError:
-            self.toggler = True
-
-        if self.toggler:
+        if random.random() < 0.5:
             # Get the most populated cell
             if not self.most_populated_cell:
                 return  # No populated cell to process
             cell_dots = self.grid.get(self.most_populated_cell, [])
         else:
-            # Get a random cell
-            cell_dots = self.grid.get(random.randint(0, len(self.grid)), [])
+            if random.random() < 0.25:
+                self.cut_dots_population()
+            return
 
         if len(cell_dots) < 2:
             return  # Not enough dots in the cell to consolidate
@@ -286,7 +278,7 @@ class Game:
         ]
         self.food = [Food() for _ in range(1)]
 
-    def create_ant_from_anthill(self, anthill,create:int=2):
+    def create_ant_from_anthill(self, anthill, create: int = 2):
         """Creates new ants at a specified anthill's position."""
         for _ in range(random.randint(1, create)):
             self.ants.append(Ant(position=anthill.position))
@@ -316,7 +308,7 @@ class Game:
                 self._return_dot_to_pool(dot)
         self.dots = active_dots
         if len(self.ants) <= 1:
-            self.create_ant_from_anthill(self.anthills[0],create=self.popmin)
+            self.create_ant_from_anthill(self.anthills[0], create=self.popmin)
         self.ants = [ant for ant in self.ants if ant.alive]
 
     def update_simulation(self):
@@ -327,11 +319,9 @@ class Game:
         ) % self.UPDATE_SKIP_FRAMES
         if self.update_skip_counter != 0:
             return
-
         # Update dots
         for dot in self.dots:
             dot.update()
-
         try:
             self.constantconsolidation()
         except Exception as e:
@@ -388,17 +378,19 @@ class Game:
     def cut_dots_population(self):
         """Reduce the number of pheromone dots by half."""
         random.shuffle(self.dots)
-        dots_to_remove = len(self.dots) // 2
+        dots_to_remove = int(len(self.dots) * settings.lookbehind)
         removed_dots = self.dots[dots_to_remove:]
         self.dots = self.dots[:dots_to_remove]
         # Return removed dots to pool
         for dot in removed_dots:
             self._return_dot_to_pool(dot)
 
-    def cut_ant_population(self):
+    def cut_ant_population(self, howmany: int = 1):
+        """Reduce the number of ants by one."""
         """eliminate one ant"""
-        random.shuffle(self.ants)
-        self.ants[0].alive = False
+        for _ in range(howmany):
+            random.shuffle(self.ants)
+            self.ants[0].alive = False
 
     def reset_simulation(self):
         """Performs a complete reset of the simulation."""

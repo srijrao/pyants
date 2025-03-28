@@ -40,6 +40,6 @@ dot_size = 2
 dot_time = 1000
 popmin = 100
 collision_distance = 10
-lookbehind = 0.999
+lookbehind = 0.995
 ant_speed = 10
 Anthill_size = 10
