@@ -50,7 +50,7 @@ class Game:
         self.paused = False
 
         # Spatial partitioning (grid-based)
-        self.cell_size = ((settings.width+settings.height)//2) // 100
+        self.cell_size = ((settings.width + settings.height) // 2) // 100
         self.grid = defaultdict(list)
 
         # Pre-rendered surfaces cache
@@ -163,7 +163,7 @@ class Game:
                     continue
                 if dot == other_dot or other_dot in dots_to_remove:
                     continue
-                
+
                 # Calculate distance
                 dx = dot.position[0] - other_dot.position[0]
                 dy = dot.position[1] - other_dot.position[1]
@@ -280,21 +280,25 @@ class Game:
             )
         ]
         self.ants = [
-            Ant(position=self.anthills[0].position, anthill=self.anthills[0]) for _ in range(self.popmin)
+            Ant(position=self.anthills[0].position, anthill=self.anthills[0])
+            for _ in range(self.popmin)
         ]
         self.food = [Food() for _ in range(1)]
 
-    def create_ant_from_anthill(self, anthill, create: int = 2):
-        """Creates new ants at a specified anthill's position."""
-        for _ in range(random.randint(1, create)):
-            self.ants.append(Ant(position=anthill.position, anthill=anthill))
+    def create_ant_from_anthill(self, anthill=None, create: int = 2):
+        """Creates new ants at each anthill's position."""
+        if anthill is None:
+            anthill = random.choice(self.anthills)
+        for anthill in self.anthills:
+            for _ in range(random.randint(1, create)):
+                self.ants.append(Ant(position=anthill.position, anthill=anthill))
 
     def population_control(self):
         """Manages the population of entities in the simulation."""
         try:
             if self.frame_count == 0:
                 if self.actual_fps > (self.targetfps // 3):
-                    self.create_ant_from_anthill(self.anthills[0])
+                    self.create_ant_from_anthill()
                 if self.actual_fps < (self.targetfps // 3):
                     # Return removed dots to pool
                     dots_to_remove = len(self.ants) * 2
@@ -314,7 +318,7 @@ class Game:
                 self._return_dot_to_pool(dot)
         self.dots = active_dots
         if len(self.ants) <= 1:
-            self.create_ant_from_anthill(self.anthills[0], create=self.popmin)
+            self.create_ant_from_anthill(create=self.popmin)
         self.ants = [ant for ant in self.ants if ant.alive]
 
     def update_simulation(self):
@@ -496,7 +500,7 @@ class Game:
             pygame.K_k: self.cut_ant_population,
             pygame.K_p: lambda: setattr(self, "paused", not self.paused),
             pygame.K_d: lambda: setattr(self, "debug", not self.debug),
-            pygame.K_SPACE: lambda: self.create_ant_from_anthill(self.anthills[0]),
+            pygame.K_SPACE: lambda: self.create_ant_from_anthill(),
             pygame.K_c: lambda: setattr(self, "see_dots", not self.see_dots),
             # add ant to self.ants
             pygame.K_UP: lambda: self.ants.append(
