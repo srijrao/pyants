@@ -14,7 +14,7 @@ class Ant:
 
     def __init__(self, position=[settings.width / 2, settings.height / 2], anthill=None):
         """
-        Initializes an Ant object.
+        Initializes an Ant object
 
         Args:
             position (list, optional): The initial position of the ant.
@@ -319,59 +319,98 @@ class Ant:
         """
         Act based on environment and time.
         """
-        now = random.random()
-        self.shake_shiver()
-        self.lifespan()
-        dot_type = None
-        # Check if ant is at anthill with food
-        if self.foodbool:
-            distance_to_anthill = self.distance_to(self.anthill_position)
-            if distance_to_anthill < self.collision_distance:
-                self.alive = False
-                return (None, self.timeawareness)
+        try:
+            now = random.random()
+            try:
+                self.shake_shiver()
+            except Exception as e:
+                print(f"Error in ant.shake_shiver: {str(e)}")
+                import traceback
+                traceback.print_exc()
+            
+            self.lifespan()
+            dot_type = None
 
-        if now > 0.5:
-            dot_type = self.drop_dot()
-            if now > self.likelylookbehind:
-                self.flip()
+            # Check if ant is at anthill with food
+            try:
+                if self.foodbool:
+                    distance_to_anthill = self.distance_to(self.anthill_position)
+                    if distance_to_anthill < self.collision_distance:
+                        self.alive = False
+                        return (None, self.timeawareness)
+            except Exception as e:
+                print(f"Error checking anthill distance: {str(e)}")
+                import traceback
+                traceback.print_exc()
 
-        self.timeawareness += 0.001
+            if now > 0.5:
+                dot_type = self.drop_dot()
+                if now > self.likelylookbehind:
+                    self.flip()
 
-        if environment:
-            # Check for food if not carrying any
-            if not self.foodbool:
-                view_triangle = self.calculate_view_triangle()
-                visible_items = environment.get_items_in_polygon(view_triangle)
-                visible_food = [
-                    item
-                    for item in visible_items
-                    if isinstance(item, type(environment.food[0]))
-                ]
-                if visible_food:
-                    # Check if ant has actually reached the food
-                    distance_to_food = self.distance_to(visible_food[0].position)
-                    if distance_to_food < self.collision_distance:
-                        # Actually reached food - pick it up and set foodbool
-                        self.foodbool = True
-                        self.timeleft = 1000  # Reset ant lifetime when food found
-                        self.timeawareness = 0
-                        self.flip()
-                    # Either way, move towards the food
-                    self.turn_towards(visible_food[0].position)
-                    self.move(forward=True)
+            self.timeawareness += 0.001
 
-            # Look for newest appropriate dot
-            nearest_dot = self.find_newest_visible_dot(environment)
-            if nearest_dot:
-                # Follow the newest dot of appropriate type
-                self.timeleft += 1
-                newest_dot = nearest_dot
-                self.turn_towards(newest_dot.position)
-                self.move(forward=True)
+            if environment:
+                try:
+                    # Check for food if not carrying any
+                    if not self.foodbool:
+                        view_triangle = self.calculate_view_triangle()
+                        visible_items = environment.get_items_in_polygon(view_triangle)
+                        if not environment.food:  # Safety check
+                            return (dot_type, self.timeawareness)
+                        
+                        visible_food = [
+                            item
+                            for item in visible_items
+                            if isinstance(item, type(environment.food[0]))
+                        ]
+                        if visible_food:
+                            # Check if ant has actually reached the food
+                            distance_to_food = self.distance_to(visible_food[0].position)
+                            if distance_to_food < self.collision_distance:
+                                # Actually reached food - pick it up and set foodbool
+                                self.foodbool = True
+                                self.timeleft = 1000  # Reset ant lifetime when food found
+                                self.timeawareness = 0
+                                self.flip()
+                            # Either way, move towards the food
+                            self.turn_towards(visible_food[0].position)
+                            self.move(forward=True)
+                except Exception as e:
+                    print(f"Error processing food interaction: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+
+                try:
+                    # Look for newest appropriate dot
+                    nearest_dot = self.find_newest_visible_dot(environment)
+                    if nearest_dot:
+                        # Follow the newest dot of appropriate type
+                        self.timeleft += 1
+                        self.turn_towards(nearest_dot.position)
+                        self.move(forward=True)
+                    else:
+                        self.random_walk()
+                except Exception as e:
+                    print(f"Error processing dot following: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+                    self.random_walk()  # Fallback behavior
             else:
                 self.random_walk()
-        else:
-            self.random_walk()
 
-        self.check_edge_collision()
-        return (dot_type, self.timeawareness)
+            try:
+                self.check_edge_collision()
+            except Exception as e:
+                print(f"Error in edge collision check: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                self.screen_clamp()  # Fallback safety measure
+                
+            return (dot_type, self.timeawareness)
+            
+        except Exception as e:
+            print(f"\nCritical error in ant.act: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return (None, self.timeawareness)  # Safe fallback return value
