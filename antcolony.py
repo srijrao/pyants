@@ -7,6 +7,8 @@ The anthill serves as the origin point for ants and the destination for food col
 
 import settings
 import random
+from color import Color
+
 
 class Anthill:
     """
@@ -39,7 +41,8 @@ class Anthill:
         else:
             self.position = position
         self.size = size
-        self.color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
+        self.color = Color().create_any_color()
+        self.hue = Color().convert_rgb_to_hls(self.color)[0]  # Get the hue from the color
         self.visual_packet = None
             
     def randompositionsetter(self):
