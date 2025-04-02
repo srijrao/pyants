@@ -51,7 +51,7 @@ class Ant:
         self.foodbool = None
         self.homebool = False
         self.timeawareness = 0
-        self.timeleft = settings.dot_time
+        self.timeleft = 1000  # Fixed lifetime for ants
         self.dropbool = True
         self.likelylookbehind = settings.lookbehind
         # Cache for visual packet
@@ -353,7 +353,7 @@ class Ant:
                     if distance_to_food < self.collision_distance:
                         # Actually reached food - pick it up and set foodbool
                         self.foodbool = True
-                        self.timeleft = settings.dot_time
+                        self.timeleft = 1000  # Reset ant lifetime when food found
                         self.timeawareness = 0
                         self.flip()
                     # Either way, move towards the food

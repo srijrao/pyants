@@ -39,6 +39,7 @@ RED = (184, 13, 20)
 PURPLE = (154, 11, 160)
 BLACK = (10, 10, 10)
 dot_size = 2
+dot_death_rate = 0.95
 dot_time = 1000
 popmin = 100
 collision_distance = 10

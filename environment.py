@@ -192,9 +192,7 @@ class Game:
             (dot.position[0] + other_dot.position[0]) / 2,
             (dot.position[1] + other_dot.position[1]) / 2,
         ]
-        new_timeleft = (dot.timeleft + other_dot.timeleft) // 2
         new_dot = self._get_dot_from_pool(new_position, dot.type, dot.time)
-        new_dot.timeleft = new_timeleft
         return new_dot
 
     def dot_consolidate_handler(self):
@@ -207,14 +205,14 @@ class Game:
         visited = set()
 
         for dot in self.dots:
-            if dot in visited or not dot.active:
+            if dot in visited:
                 continue
 
             # Find the closest dot
             closest_dot = None
             closest_distance = float("inf")
             for other_dot in self.dots:
-                if other_dot in visited or not other_dot.active or other_dot == dot:
+                if other_dot in visited or other_dot == dot:
                     continue
 
                 # Calculate distance
@@ -309,14 +307,6 @@ class Game:
             print(e)
             self.create_population()
 
-        # Clean up inactive entities and return dots to pool
-        active_dots = []
-        for dot in self.dots:
-            if dot.active:
-                active_dots.append(dot)
-            else:
-                self._return_dot_to_pool(dot)
-        self.dots = active_dots
         if len(self.ants) <= 1:
             self.create_ant_from_anthill(create=self.popmin)
         self.ants = [ant for ant in self.ants if ant.alive]
@@ -329,9 +319,6 @@ class Game:
         ) % self.UPDATE_SKIP_FRAMES
         if self.update_skip_counter != 0:
             return
-        # Update dots
-        for dot in self.dots:
-            dot.update()
         try:
             self.constantconsolidation()
         except Exception as e:
@@ -385,9 +372,9 @@ class Game:
         self.running = False
 
     def cut_dots_population(self):
-        """Reduce the number of pheromone dots by half."""
+        """Reduce the number of pheromone dots based on death rate."""
         random.shuffle(self.dots)
-        dots_to_remove = int(len(self.dots) * 0.9)
+        dots_to_remove = int(len(self.dots) * settings.dot_death_rate)
         removed_dots = self.dots[dots_to_remove:]
         self.dots = self.dots[:dots_to_remove]
         # Return removed dots to pool
@@ -577,7 +564,7 @@ class Game:
         # Update visible entities list and spatial grid
         self.onscreen = (
             self.anthills
-            + [dot for dot in self.dots if dot.active]
+            + self.dots
             + [ant for ant in self.ants if ant.alive]
             + self.food
         )
@@ -600,22 +587,21 @@ class Game:
         if self.see_dots is True:
             # Draw dots with alpha transparency
             for dot in self.dots:
-                if dot.active:
-                    visual = dot.visual()
-                    dot_surface = pygame.Surface(
-                        (visual["size"] * 2, visual["size"] * 2), pygame.SRCALPHA
-                    )
-                    pygame.draw.circle(
-                        dot_surface,
-                        visual["color"],  # Color includes alpha from visual()
-                        (visual["size"], visual["size"]),
-                        visual["size"],
-                    )
-                    pos = (
-                        visual["position"][0] - visual["size"],
-                        visual["position"][1] - visual["size"],
-                    )
-                    self.screen.blit(dot_surface, pos)
+                visual = dot.visual()
+                dot_surface = pygame.Surface(
+                    (visual["size"] * 2, visual["size"] * 2), pygame.SRCALPHA
+                )
+                pygame.draw.circle(
+                    dot_surface,
+                    visual["color"],  # Color includes alpha from visual()
+                    (visual["size"], visual["size"]),
+                    visual["size"],
+                )
+                pos = (
+                    visual["position"][0] - visual["size"],
+                    visual["position"][1] - visual["size"],
+                )
+                self.screen.blit(dot_surface, pos)
             # if len(self.dots) > 10000:
             #   self.cut_dots_population()
             # Draw ants
