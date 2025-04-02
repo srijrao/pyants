@@ -1,6 +1,7 @@
 import settings
 import math
 import random
+from color import Color
 
 
 class Ant:
@@ -11,7 +12,7 @@ class Ant:
     that define its behavior.
     """
 
-    def __init__(self, position=[settings.width / 2, settings.height / 2]):
+    def __init__(self, position=[settings.width / 2, settings.height / 2], anthill=None):
         """
         Initializes an Ant object.
 
@@ -21,15 +22,22 @@ class Ant:
         """
         self.position = position
         self.anthill_position = position.copy()  # Store anthill position
+        self.anthill = anthill
         self.setup()
 
     def setup(self):
         self.alive = True
-        self.color = (
-            random.randint(10, 200),
-            random.randint(10, 200),
-            random.randint(10, 200),
-        )
+        # Use anthill hue if available, otherwise random color
+        if self.anthill:
+            # Create new color with anthill's hue but random lightness/saturation
+            color_handler = Color()
+            self.color = color_handler.create_color_from_hue(self.anthill.hue)
+        else:
+            self.color = (
+                random.randint(10, 200),
+                random.randint(10, 200),
+                random.randint(10, 200),
+            )
         self.organism_height = 10
         self.organism_width = 5
         self.num_sides = random.randint(3, 8)

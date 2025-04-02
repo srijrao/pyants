@@ -37,9 +37,9 @@ class Color:
             tuple: A tuple representing the RGB color value.
         """
         if lightness is None:
-            lightness = random.uniform(0.3, 0.7)  # Default lightness
+            lightness = random.uniform(0.1, 0.9)  # Default lightness
         if saturation is None:
-            saturation = random.uniform(0.5, 1.0)  # Default saturation
+            saturation = random.uniform(0.3, 1.0)  # Default saturation
         # Convert HLS to RGB
         hls = (hue, lightness, saturation)
         rgb = colorsys.hls_to_rgb(*hls)

@@ -280,14 +280,14 @@ class Game:
             )
         ]
         self.ants = [
-            Ant(position=self.anthills[0].position) for _ in range(self.popmin)
+            Ant(position=self.anthills[0].position, anthill=self.anthills[0]) for _ in range(self.popmin)
         ]
         self.food = [Food() for _ in range(1)]
 
     def create_ant_from_anthill(self, anthill, create: int = 2):
         """Creates new ants at a specified anthill's position."""
         for _ in range(random.randint(1, create)):
-            self.ants.append(Ant(position=anthill.position))
+            self.ants.append(Ant(position=anthill.position, anthill=anthill))
 
     def population_control(self):
         """Manages the population of entities in the simulation."""
@@ -500,7 +500,7 @@ class Game:
             pygame.K_c: lambda: setattr(self, "see_dots", not self.see_dots),
             # add ant to self.ants
             pygame.K_UP: lambda: self.ants.append(
-                Ant(position=self.anthills[0].position)
+                Ant(position=self.anthills[0].position, anthill=self.anthills[0])
             ),
         }
         action = actions.get(event.key)
