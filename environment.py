@@ -123,63 +123,28 @@ class Game:
 
     def _return_dot_to_pool(self, dot):
         """Return a dot to the object pool."""
-        if len(self._dot_pool) < 1000:  # Limit pool size
+        if self.actual_fps < 15:  # Limit pool size
             self._dot_pool.append(dot)
 
     def constantconsolidation(self):
         """Optimize the number of dots by consolidating dots in the most populated cell."""
-        # Ensure the spatial grid is updated
-        self._update_spatial_grid()
-        if random.random() > settings.dot_death_rate:
-            self.cut_dots_population()
-            return
-        if random.random() < 0.5:
-            # Get the most populated cell
-            if not self.most_populated_cell:
-                return  # No populated cell to process
-            cell_dots = self.grid.get(self.most_populated_cell, [])
-        else:
-            if random.random() > settings.dot_death_rate:
+        try:
+            # Ensure the spatial grid is updated
+            self._update_spatial_grid()
+            if random.random()*self.targetfps > self.actual_fps:
                 self.cut_dots_population()
-            return
-
-        if len(cell_dots) < 2:
-            return  # Not enough dots in the cell to consolidate
-
-        # Track dots to remove
-        dots_to_remove = set()
-
-        # Consolidate dots in the most populated cell
-        for dot in cell_dots[:]:  # Use a copy of the list to avoid modification issues
-            if not isinstance(dot, Dot):  # Ensure only Dot objects are processed
-                continue
-            if dot in dots_to_remove:
-                continue
-
-            for other_dot in cell_dots:
-                if not isinstance(
-                    other_dot, Dot
-                ):  # Ensure only Dot objects are processed
-                    continue
-                if dot == other_dot or other_dot in dots_to_remove:
-                    continue
-
-                # Calculate distance
-                dx = dot.position[0] - other_dot.position[0]
-                dy = dot.position[1] - other_dot.position[1]
-                distance = (dx * dx + dy * dy) ** 0.5
-
-                if distance < settings.collision_distance / 4:
-                    # Consolidate the two dots
-                    new_dot = self.consolidate_two_dots(dot, other_dot)
-                    if new_dot:
-                        self.dots.append(new_dot)
-                        dots_to_remove.add(dot)
-                        dots_to_remove.add(other_dot)
-                    break  # Exit inner loop to avoid further processing of `dot`
-
-        # Remove the marked dots
-        self.dots = [dot for dot in self.dots if dot not in dots_to_remove]
+                if random.random()*random.random()*self.targetfps > self.actual_fps:
+                    nummy = int(random.random() * len(self.ants))
+                    if nummy < len(self.ants):  # Safety check
+                        self.ants.pop(nummy)
+                return
+        except Exception as e:
+            import traceback
+            print("\nError in constantconsolidation:")
+            traceback.print_exc()
+            print(f"\nError details: {str(e)}")
+            if not self.debug:
+                raise  # Re-raise in non-debug mode
 
     def consolidate_two_dots(self, dot, other_dot):
         """Consolidate two dots into one."""
@@ -283,8 +248,14 @@ class Game:
         ]
         self.food = [Food() for _ in range(1)]
 
-    def create_ant_from_anthill(self, anthill=None, create: int = 2):
+    def create_ant_from_anthill(self, anthill=None, create: int = None):
         """Creates new ants at each anthill's position."""
+        if create is None:
+            create = len(self.ants) // 2
+        if create < 1:
+            create = 1
+        if create > 10:
+            create = 10
         if anthill is None:
             anthill = random.choice(self.anthills)
         for anthill in self.anthills:
@@ -355,12 +326,25 @@ class Game:
 
             # Update simulation state
             if not self.paused:
-                self.update_simulation()
+                try:
+                    self.update_simulation()
+                except Exception as e:
+                    import traceback
+                    print("\nError occurred during simulation update:")
+                    traceback.print_exc()
+                    print(f"\nError details: {str(e)}")
+                    if not self.debug:
+                        raise  # Re-raise in non-debug mode to halt execution
 
             # Render frame
-            self.screen.fill(BROWN)
-            self.draw()
-            pygame.display.flip()
+            if random.random() > 0.5 and self.debug:
+                self.screen.fill(BROWN)
+                self.draw()
+                pygame.display.flip()
+            else:
+                self.screen.fill(BROWN)
+                self.draw()
+                pygame.display.flip()
 
             self.clock.tick(1000000)
 
@@ -397,7 +381,6 @@ class Game:
         self.food.clear()
         self._dot_pool.clear()
         self.secs = 0
-
 
         # Start fresh
         self.create_population()

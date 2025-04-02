@@ -28,7 +28,7 @@ Simulation Parameters:
 width = 1200
 height = 800
 area = width*height
-targetfps = 60
+targetfps = 30
 name = "Pyants"
 WHITE = (245, 245, 245)
 GRAY = (128, 128, 128)
@@ -41,7 +41,7 @@ BLACK = (10, 10, 10)
 dot_size = 2
 dot_death_rate = 0.95
 dot_time = 1000
-popmin = 100
+popmin = 10
 collision_distance = 10
 lookbehind = 0.995
 ant_speed = 10
