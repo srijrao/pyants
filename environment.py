@@ -130,7 +130,7 @@ class Game:
         """Optimize the number of dots by consolidating dots in the most populated cell."""
         # Ensure the spatial grid is updated
         self._update_spatial_grid()
-        if random.random() < 0.005:
+        if random.random() > settings.dot_death_rate:
             self.cut_dots_population()
             return
         if random.random() < 0.5:
@@ -139,7 +139,7 @@ class Game:
                 return  # No populated cell to process
             cell_dots = self.grid.get(self.most_populated_cell, [])
         else:
-            if random.random() < 0.15:
+            if random.random() > settings.dot_death_rate:
                 self.cut_dots_population()
             return
 
@@ -396,6 +396,8 @@ class Game:
         self.anthills.clear()
         self.food.clear()
         self._dot_pool.clear()
+        self.secs = 0
+
 
         # Start fresh
         self.create_population()
