@@ -10,15 +10,14 @@ import pygame
 import sys
 import random
 from collections import defaultdict
+import json
+
 
 import settings
 from dots import Dot
 from ants import Ant
 from antcolony import Anthill
 from food import Food
-
-WHITE = settings.WHITE
-BROWN = settings.BROWN
 
 
 class Game:
@@ -28,9 +27,7 @@ class Game:
         pygame.init()
         self.debug = debug
         self.see_dots = debug
-        self.width = settings.width
-        self.height = settings.height
-        self.targetfps = settings.targetfps
+        self.getsettings()
         self.frame_count = 0
         self.start_time = pygame.time.get_ticks()
         self.secs = 0
@@ -38,7 +35,6 @@ class Game:
         self.lastframetime = None
         self.info_lines = []
         self.actual_fps = 1
-        self.popmin = settings.popmin
 
         # Object pooling for dots
         self._dot_pool = []
@@ -50,7 +46,7 @@ class Game:
         self.paused = False
 
         # Spatial partitioning (grid-based)
-        self.cell_size = ((settings.width + settings.height) // 2) // 100
+        self.cell_size = ((self.width + self.height) // 2) // 100
         self.grid = defaultdict(list)
 
         # Pre-rendered surfaces cache
@@ -64,7 +60,7 @@ class Game:
 
         # Render Screen
         self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption(settings.name)
+        pygame.display.set_caption(self.name)
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 16)
         self.running = True
@@ -72,10 +68,44 @@ class Game:
         # Initialize cached surfaces
         self._init_surface_cache()
 
+    def getsettings(self):
+        """Get the current settings."""
+        # Load settings from JSON file
+        try:
+            with open("settings.json", "r") as f:
+                self.settings_data = json.load(f)
+        except FileNotFoundError:
+            print("Settings file not found. Using default settings.")
+            self.settings_data = {}
+        self.width = self.settings_data.get("width", settings.width)
+        self.height = self.settings_data.get("height", settings.height) 
+        self.targetfps = self.settings_data.get("targetfps", settings.targetfps)
+        self.popmin = self.settings_data.get("popmin", settings.popmin)
+        self.name = self.settings_data.get("name", settings.name)
+        self.anthill_size = self.settings_data.get("Anthill_size", settings.Anthill_size)
+        self.dot_size = self.settings_data.get("dot_size", settings.dot_size)
+        self.dot_time = self.settings_data.get("dot_time", settings.dot_time)
+        self.dot_death_rate = self.settings_data.get("dot_death_rate", settings.dot_death_rate)
+        # For "to food" (purple) dots
+        self.dot_color_food = self.settings_data.get("PURPLE", settings.PURPLE)
+        # For "to home" (white) dots
+        self.dot_color_home = self.settings_data.get("WHITE", settings.WHITE)
+        # For Background color
+        self.background_color = self.settings_data.get("BROWN", settings.BROWN)
+        self.ui_color = self.settings_data.get("WHITE", settings.WHITE)
+
+        self.savesettings()
+
+    def savesettings(self):
+        """Save the current settings to a JSON file."""
+        with open("settings.json", "w") as f:
+            json.dump(self.settings_data, f, indent=4)
+        print("Settings saved to settings.json")
+
     def _init_surface_cache(self):
         """Pre-render commonly used surfaces."""
         # Cache anthill surface
-        anthill_size = settings.Anthill_size * 2
+        anthill_size = self.anthill_size * 2
         anthill_surf = pygame.Surface((anthill_size, anthill_size), pygame.SRCALPHA)
         pygame.draw.circle(
             anthill_surf,
@@ -84,13 +114,13 @@ class Game:
                 random.randint(100, 255),
                 random.randint(100, 255),
             ),
-            (settings.Anthill_size, settings.Anthill_size),
-            settings.Anthill_size,
+            (self.anthill_size, self.anthill_size),
+            self.anthill_size,
         )
         self._surface_cache["anthill"] = anthill_surf
 
         # Cache dot surfaces for both colors
-        for size in range(1, settings.dot_size + 1):
+        for size in range(1, self.dot_size + 1):
             # "to food" dots (purple)
             # For "to food" (purple) dots
             food_key = f"dot_food_{size}"
@@ -98,7 +128,9 @@ class Game:
                 (size * 2, size * 2)
             ).convert_alpha()  # Convert for better performance
             food_surf.fill((0, 0, 0, 0))  # Fill with transparent black
-            pygame.draw.circle(food_surf, (*settings.PURPLE, 255), (size, size), size)
+            pygame.draw.circle(
+                food_surf, (*self.dot_color_food, 255), (size, size), size
+            )
             self._surface_cache[food_key] = food_surf
 
             # For "to home" (white) dots
@@ -107,7 +139,9 @@ class Game:
                 (size * 2, size * 2)
             ).convert_alpha()  # Convert for better performance
             home_surf.fill((0, 0, 0, 0))  # Fill with transparent black
-            pygame.draw.circle(home_surf, (*settings.WHITE, 255), (size, size), size)
+            pygame.draw.circle(
+                home_surf, (*self.dot_color_home, 255), (size, size), size
+            )
             self._surface_cache[home_key] = home_surf
 
     def _get_dot_from_pool(self, position, dot_type, dot_time):
@@ -131,15 +165,16 @@ class Game:
         try:
             # Ensure the spatial grid is updated
             self._update_spatial_grid()
-            if random.random()*self.targetfps > self.actual_fps:
+            if random.random() * self.targetfps > self.actual_fps:
                 self.cut_dots_population()
-                if random.random()*random.random()*self.targetfps > self.actual_fps:
+                if random.random() * random.random() * self.targetfps > self.actual_fps:
                     nummy = int(random.random() * len(self.ants))
                     if nummy < len(self.ants):  # Safety check
                         self.ants.pop(nummy)
                 return
         except Exception as e:
             import traceback
+
             print("\nError in constantconsolidation:")
             traceback.print_exc()
             print(f"\nError details: {str(e)}")
@@ -208,7 +243,6 @@ class Game:
         """Update spatial partitioning grid and track the most populated cell."""
         self.grid.clear()
         self.most_populated_cell = None
-        max_population = 0
 
         for item in self.onscreen:
             if hasattr(item, "position"):
@@ -218,9 +252,9 @@ class Game:
                 self.grid[cell].append(item)
 
                 # Track the most populated cell
-                if len(self.grid[cell]) > max_population:
-                    max_population = len(self.grid[cell])
-                    self.most_populated_cell = cell
+                # if len(self.grid[cell]) > max_population:
+                #    max_population = len(self.grid[cell])
+                #    self.most_populated_cell = cell
 
     def timepiece(self):
         """Updates the elapsed time for the environment."""
@@ -233,7 +267,7 @@ class Game:
 
     def create_population(self):
         """Initialize the simulation entities."""
-        barrier = settings.Anthill_size * 2
+        barrier = self.anthill_size * 2
         self.anthills = [
             Anthill(
                 position=[
@@ -330,6 +364,7 @@ class Game:
                     self.update_simulation()
                 except Exception as e:
                     import traceback
+
                     print("\nError occurred during simulation update:")
                     traceback.print_exc()
                     print(f"\nError details: {str(e)}")
@@ -338,11 +373,11 @@ class Game:
 
             # Render frame
             if random.random() > 0.5 and self.debug:
-                self.screen.fill(BROWN)
+                self.screen.fill(self.background_color)
                 self.draw()
                 pygame.display.flip()
             else:
-                self.screen.fill(BROWN)
+                self.screen.fill(self.background_color)
                 self.draw()
                 pygame.display.flip()
 
@@ -358,7 +393,7 @@ class Game:
     def cut_dots_population(self):
         """Reduce the number of pheromone dots based on death rate."""
         random.shuffle(self.dots)
-        dots_to_remove = int(len(self.dots) * settings.dot_death_rate)
+        dots_to_remove = int(len(self.dots) * self.dot_death_rate)
         removed_dots = self.dots[dots_to_remove:]
         self.dots = self.dots[:dots_to_remove]
         # Return removed dots to pool
@@ -391,7 +426,7 @@ class Game:
         for anthill in self.anthills:
             dx = position[0] - anthill.position[0]
             dy = position[1] - anthill.position[1]
-            min_distance = size + settings.Anthill_size
+            min_distance = size + self.anthill_size
             if (dx * dx + dy * dy) < (min_distance * min_distance):
                 return True
 
@@ -450,14 +485,14 @@ class Game:
 
     def add_new_anthill(self):
         """Creates a new anthill at a random non-overlapping position."""
-        position = self.get_valid_position(settings.Anthill_size)
+        position = self.get_valid_position(self.anthill_size)
         new_anthill = Anthill(position=position)
         self.anthills.append(new_anthill)
         self.create_ant_from_anthill(new_anthill)
 
     def add_new_food(self):
         """Creates a new food source at a random non-overlapping position."""
-        food_size = settings.Anthill_size * 2  # Food size is 2x anthill size
+        food_size = self.anthill_size * 2  # Food size is 2x anthill size
         position = self.get_valid_position(food_size)
         self.food.append(Food(position=position))
 
@@ -559,8 +594,8 @@ class Game:
         for anthill in self.anthills:
             visual = anthill.visual()
             pos = (
-                visual["position"][0] - settings.Anthill_size,
-                visual["position"][1] - settings.Anthill_size,
+                visual["position"][0] - self.anthill_size,
+                visual["position"][1] - self.anthill_size,
             )
             self.screen.blit(self._surface_cache["anthill"], pos)
 
@@ -594,14 +629,14 @@ class Game:
             visual = ant.visual()
             pygame.draw.polygon(self.screen, visual["color"], visual["points"])
             if self.debug:
-                pygame.draw.polygon(self.screen, WHITE, ant.calculate_view_triangle())
+                pygame.draw.polygon(self.screen, self.dot_color_home, ant.calculate_view_triangle())
 
         # Draw debug information
         self.info_lines_calc()
         y_offset = 10
         for line in self.info_lines:
             if line:
-                text_surface = self.font.render(line, True, WHITE)
+                text_surface = self.font.render(line, True, self.ui_color)
                 self.screen.blit(text_surface, (10, y_offset))
             y_offset += 18
 
