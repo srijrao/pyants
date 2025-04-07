@@ -3,7 +3,7 @@ Main Module for Ant Colony Simulation
 
 This module serves as the entry point for the ant colony simulation.
 It initializes and runs the main game loop by creating an instance
-of the Game class from the environment module.
+of the Game class from the game_state module.
 
 Example:
     To run the simulation:
@@ -14,7 +14,7 @@ The simulation will continue until the user closes the window or
 presses the 'q' key to quit.
 """
 
-import environment
+from game_state import Game
 
 def main():
     """
@@ -24,7 +24,7 @@ def main():
     The simulation will continue running until the user explicitly exits
     (by closing the window or pressing 'q').
     """
-    environment.Game().run()
+    Game(debug=True).run()
 
 if __name__ == "__main__":
     main()
