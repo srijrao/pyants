@@ -92,7 +92,7 @@ class Game:
             "PURPLE": self.dot_color_food,
             "WHITE": self.dot_color_home,
             "BROWN": self.background_color,
-            "WHITE": self.ui_color
+            "WHITE": self.ui_color  # noqa: F601
         })
 
         self.savesettings()
