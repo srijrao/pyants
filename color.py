@@ -71,5 +71,10 @@ class Color:
             tuple: A tuple representing the RGB color value (0-255).
         """
         h, l, s = hls
+        # Ensure h, l, s are in the range [0, 1]   
+        h = max(0, min(1, h))
+        l = max(0, min(1, l))
+        s = max(0, min(1, s))
+        # Convert HLS to RGB
         r, g, b = colorsys.hls_to_rgb(h, l, s)
         return (int(r * 255), int(g * 255), int(b * 255))
