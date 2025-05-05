@@ -7,6 +7,7 @@ This module handles rendering and surface caching for the simulation.
 import pygame
 import random
 
+
 class Graphics:
     def __init__(self, game):
         self.game = game
@@ -16,20 +17,6 @@ class Graphics:
 
     def _init_surface_cache(self):
         """Pre-render commonly used surfaces."""
-        # Cache anthill surface
-        anthill_size = self.game.anthill_size * 2
-        anthill_surf = pygame.Surface((anthill_size, anthill_size), pygame.SRCALPHA)
-        pygame.draw.circle(
-            anthill_surf,
-            (
-                random.randint(100, 255),
-                random.randint(100, 255),
-                random.randint(100, 255),
-            ),
-            (self.game.anthill_size, self.game.anthill_size),
-            self.game.anthill_size,
-        )
-        self._surface_cache["anthill"] = anthill_surf
 
         # Cache dot surfaces for both colors
         for size in range(1, self.game.dot_size + 1):
@@ -65,16 +52,17 @@ class Graphics:
             + self.game.food
         )
         self.game.spatial_grid.update_grid()
-
-        # Draw using cached surfaces where possible
+    
+        # Draw anthills
         for anthill in self.game.anthills:
             visual = anthill.visual()
-            pos = (
-                visual["position"][0] - self.game.anthill_size,
-                visual["position"][1] - self.game.anthill_size,
+            pygame.draw.circle(
+                self.game.screen,
+                visual["color"],
+                visual["position"],
+                visual["size"],
             )
-            self.game.screen.blit(self._surface_cache["anthill"], pos)
-
+            
         for food in self.game.food:
             visual = food.visual()
             pygame.draw.circle(
@@ -105,7 +93,11 @@ class Graphics:
             visual = ant.visual()
             pygame.draw.polygon(self.game.screen, visual["color"], visual["points"])
             if self.game.debug:
-                pygame.draw.polygon(self.game.screen, self.game.dot_color_home, ant.calculate_view_triangle())
+                pygame.draw.polygon(
+                    self.game.screen,
+                    self.game.dot_color_home,
+                    ant.calculate_view_triangle(),
+                )
 
         # Draw debug information
         self.game.info_lines_calc()
