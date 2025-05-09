@@ -178,7 +178,14 @@ class EntityManager:
                     self.game.dots.append(dot)
             except Exception as e:
                 print(e)
-
+        # Update all dots (increment age for fading)
+        # Remove dots that are fully faded (alpha == 0)
+        alive_dots = []
+        for dot in self.game.dots:
+            dot.update()
+            if dot.get_alpha() > 0:
+                alive_dots.append(dot)
+        self.game.dots = alive_dots
         self.population_control()
 
     def population_control(self):
