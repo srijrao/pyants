@@ -77,8 +77,7 @@ class Game:
         self.dot_color_home = self.settings_data.get("WHITE", settings.WHITE)
         self.background_color = self.settings_data.get("BROWN", settings.BROWN)
         self.ui_color = self.settings_data.get("WHITE", settings.WHITE)
-        # Load dot_fade_decay from JSON or fallback to settings.py
-        self.dot_fade_decay = self.settings_data.get("dot_fade_decay", getattr(settings, "dot_fade_decay", 200))
+        self.dot_fade_decay = self.settings_data.get("dot_fade_decay", settings.dot_fade_decay)
 
         # Update settings data
         self.settings_data.update({
