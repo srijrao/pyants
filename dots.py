@@ -40,6 +40,9 @@ class Dot:
         """
         # Initialize color attribute first since setup() uses it
         self.color = None
+        self.age = 0  # Track age in frames
+        import settings
+        self.decay_constant = getattr(settings, 'dot_fade_decay', 200)
         self.reset(position, type, time)
 
     def reset(self, position=[0, 0], type="to home", time=0):
@@ -58,6 +61,7 @@ class Dot:
         self.type = type
         self.time = time
         self.size = settings.dot_size
+        self.age = 0  # Reset age when dot is reused
         
         # Set color based on type
         if self.type == "to food":
@@ -74,17 +78,27 @@ class Dot:
             "color": (self.color[0], self.color[1], self.color[2], 255),
         }
 
+    def update(self):
+        """Increment the age of the dot each frame."""
+        self.age += 1
+
+    def get_alpha(self):
+        """Compute exponential fade alpha based on age."""
+        import math
+        alpha = int(255 * math.exp(-self.age / self.decay_constant))
+        return max(0, min(255, alpha))
+
     def visual(self):
         """
         Prepare the visual representation data for rendering.
 
-    Returns:
+        Returns:
             dict: Contains position, size, and RGBA color information for rendering.
         """
         self.visual_packet["color"] = (
             self.color[0], 
             self.color[1], 
             self.color[2], 
-            255
+            self.get_alpha()
         )
         return self.visual_packet
