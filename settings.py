@@ -41,6 +41,7 @@ BLACK = (10, 10, 10)
 dot_size = 2
 dot_death_rate = 0.95
 dot_time = 1000
+dot_fade_decay = 200  # Default decay constant for dot fading
 popmin = 10
 collision_distance = 10
 lookbehind = 0.995
