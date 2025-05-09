@@ -77,6 +77,8 @@ class Game:
         self.dot_color_home = self.settings_data.get("WHITE", settings.WHITE)
         self.background_color = self.settings_data.get("BROWN", settings.BROWN)
         self.ui_color = self.settings_data.get("WHITE", settings.WHITE)
+        # Load dot_fade_decay from JSON or fallback to settings.py
+        self.dot_fade_decay = self.settings_data.get("dot_fade_decay", getattr(settings, "dot_fade_decay", 200))
 
         # Update settings data
         self.settings_data.update({
@@ -92,7 +94,8 @@ class Game:
             "PURPLE": self.dot_color_food,
             "WHITE": self.dot_color_home,
             "BROWN": self.background_color,
-            "WHITE": self.ui_color  # noqa: F601
+            "WHITE": self.ui_color,  # noqa: F601
+            "dot_fade_decay": self.dot_fade_decay
         })
 
         self.savesettings()
