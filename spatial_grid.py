@@ -113,9 +113,12 @@ class SpatialGrid:
                     (dot.position[0] + closest_dot.position[0]) / 2,
                     (dot.position[1] + closest_dot.position[1]) / 2,
                 ]
+                # Average the ages for seamless fading
+                new_age = int((getattr(dot, 'age', 0) + getattr(closest_dot, 'age', 0)) / 2)
                 new_dot = self.game.entity_manager._get_dot_from_pool(
                     new_position, dot.type, dot.time
                 )
+                new_dot.age = new_age
                 consolidated_dots.append(new_dot)
                 visited.add(dot)
                 visited.add(closest_dot)
