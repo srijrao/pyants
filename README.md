@@ -13,7 +13,7 @@
 ## Requirements
 
 - Python 3.7+
-- [pygame](https://www.pygame.org/) (`pip install pygame`)
+- [pygame](https://www.pygame.org/) (`pip install pygame-ce`)
 
 ## Installation
 
